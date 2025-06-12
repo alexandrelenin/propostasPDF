@@ -176,8 +176,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     body: mainItemsBody,
     theme: 'grid',
     margin: { left: leftMargin, right: rightMargin },
-    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [0, 0, 0] },
-    bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [0, 0, 0] },
+    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [150, 150, 150] },
+    bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [150, 150, 150] },
     columnStyles: {
       0: { halign: 'center', cellWidth: 'auto' }, // Item
       1: { halign: 'center', cellWidth: 'auto' }, // Unid.
@@ -193,10 +193,10 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     footStyles: {
       fontSize: 9,
       lineWidth: 0.05,
-      lineColor: [0, 0, 0],
+      lineColor: [150, 150, 150],
       cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
     },
-    tableLineColor: [0, 0, 0],
+    tableLineColor: [150, 150, 150],
     tableLineWidth: 0.05,
     didParseCell: (data) => {
         if (data.section === 'body' && (data.column.index === 4 || data.column.index === 5)) {
@@ -243,8 +243,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       body: supportBody,
       theme: 'grid',
       margin: { left: leftMargin, right: rightMargin },
-      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [0, 0, 0] },
-      bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [0, 0, 0] },
+      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [150, 150, 150] },
+      bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [150, 150, 150] },
       columnStyles: {
         0: { halign: 'center', cellWidth: 'auto' }, // Item
         1: { halign: 'center', cellWidth: 'auto' }, // Unid.
@@ -261,10 +261,10 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       footStyles: {
         fontSize: 9,
         lineWidth: 0.05,
-        lineColor: [0, 0, 0],
+        lineColor: [150, 150, 150],
         cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
       },
-      tableLineColor: [0, 0, 0],
+      tableLineColor: [150, 150, 150],
       tableLineWidth: 0.05,
       didParseCell: (data) => {
         if (data.section === 'body' && (data.column.index >= 4)) {
