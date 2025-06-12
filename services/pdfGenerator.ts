@@ -143,7 +143,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
 
   // Add text centered in the rectangle
   doc.setTextColor(33, 37, 41); // Dark text color
-  doc.text(titleText, (doc.internal.pageSize.getWidth() / 2), currentY + 1);
+  doc.text(titleText, (doc.internal.pageSize.getWidth() / 2) - (titleWidth / 2), currentY + 1); // Truly center the text
   currentY += titleRectHeight + 5; // Space after title block
 
   // 3. Introductory Text
@@ -156,8 +156,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   // 4. Main Items Table (with integrated title)
   const mainItemsTableTitle = 'Equipamentos, Instalações e Licenças';
   const mainItemsHead = [
-    // @ts-ignore
-    [{ content: mainItemsTableTitle, colSpan: 6, styles: { halign: 'center' as const, fillColor: [222, 226, 230] as [number, number, number], textColor: [33, 37, 41] as [number, number, number], fontStyle: 'bold' as const } }],
+    [{ content: mainItemsTableTitle, colSpan: 6, 
+       styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
     ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']
   ];
   const mainItemsBody = proposal.items.map(item => [
@@ -218,8 +218,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     }
     const supportServicesTableTitle = 'Serviços de Suporte';
     const supportHead = [
-      // @ts-ignore
-      [{ content: supportServicesTableTitle, colSpan: 7, styles: { halign: 'center' as const, fillColor: [222, 226, 230] as [number, number, number], textColor: [33, 37, 41] as [number, number, number], fontStyle: 'bold' as const } }],
+      [{ content: supportServicesTableTitle, colSpan: 7, 
+         styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
       ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']
     ];
     const supportItemNumber = (PROPOSAL_ITEM_DEFINITIONS.length + 1).toString();
