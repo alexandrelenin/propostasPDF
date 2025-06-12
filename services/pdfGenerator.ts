@@ -129,13 +129,22 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   }
 
 
-  // 2. Header Title
+  // 2. Header Title (New Style)
   doc.setFontSize(11);
   doc.setFont('Helvetica', 'bold');
-  const title = `SECRETARIA MUNICIPAL DE EDUCAÇÃO ${proposal.clientName.toUpperCase()}`;
-  const titleWidth = doc.getTextWidth(title);
-  doc.text(title, (doc.internal.pageSize.getWidth() - titleWidth) / 2, currentY);
-  currentY += 10; // Space after title
+  const titleText = `SECRETARIA MUNICIPAL DE EDUCAÇÃO ${proposal.clientName.toUpperCase()}`;
+  const titleWidth = doc.getTextWidth(titleText);
+  const titleRectHeight = 10; // Height of the background rectangle
+  const titleRectY = currentY - 5; // Adjust Y to center text vertically in rectangle
+  
+  // Draw rectangle background
+  doc.setFillColor(222, 226, 230); // Light gray background
+  doc.rect(leftMargin, titleRectY, contentWidth, titleRectHeight, 'F');
+
+  // Add text centered in the rectangle
+  doc.setTextColor(33, 37, 41); // Dark text color
+  doc.text(titleText, (doc.internal.pageSize.getWidth() / 2), currentY + 1);
+  currentY += titleRectHeight + 5; // Space after title block
 
   // 3. Introductory Text
   doc.setFontSize(9);
@@ -144,14 +153,13 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   doc.text(introLines, leftMargin, currentY, { align: 'justify', maxWidth: contentWidth });
   currentY += (introLines.length * doc.getLineHeight() / doc.internal.scaleFactor) + 6; // Space after intro
 
-  // 4. Main Items Table Title
-  doc.setFontSize(10);
-  doc.setFont('Helvetica', 'bold');
-  doc.text('Equipamentos, Instalações e Licenças', leftMargin, currentY);
-  currentY += 8; // Space after title
-
-  // 4. Main Items Table
-  const mainItemsHead = [['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']];
+  // 4. Main Items Table (with integrated title)
+  const mainItemsTableTitle = 'Equipamentos, Instalações e Licenças';
+  const mainItemsHead = [
+    // @ts-ignore
+    [{ content: mainItemsTableTitle, colSpan: 6, styles: { halign: 'center' as const, fillColor: [222, 226, 230] as [number, number, number], textColor: [33, 37, 41] as [number, number, number], fontStyle: 'bold' as const } }],
+    ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']
+  ];
   const mainItemsBody = proposal.items.map(item => [
     item.itemNumber,
     item.unitType,
@@ -202,21 +210,20 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   doc.text(investmentValue, doc.internal.pageSize.getWidth() - rightMargin - investmentValueWidth, currentY);
   currentY += 10;
 
-  // 5. Support Services Table (if applicable)
+  // 5. Support Services Table (with integrated title)
   if (proposal.includeSupportServices && proposal.supportNumSchools > 0 && proposal.supportAnnualTotal !== undefined && proposal.supportMonthlyTotal !== undefined) {
     if (currentY + 40 > doc.internal.pageSize.getHeight() - 30) { // Check if new table needs new page (approx height)
         doc.addPage();
         currentY = 15;
     }
-    // Support Services Table Title
-    doc.setFontSize(10);
-    doc.setFont('Helvetica', 'bold');
-    doc.text('Serviços de Suporte', leftMargin, currentY);
-    currentY += 8; // Space after title
-
+    const supportServicesTableTitle = 'Serviços de Suporte';
+    const supportHead = [
+      // @ts-ignore
+      [{ content: supportServicesTableTitle, colSpan: 7, styles: { halign: 'center' as const, fillColor: [222, 226, 230] as [number, number, number], textColor: [33, 37, 41] as [number, number, number], fontStyle: 'bold' as const } }],
+      ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']
+    ];
     const supportItemNumber = (PROPOSAL_ITEM_DEFINITIONS.length + 1).toString();
     const supportDesc = SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(proposal.supportNumSchools, settings.supportServiceEmail);
-    const supportHead = [['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']];
     const supportBody = [[
       supportItemNumber,
       'UN',
