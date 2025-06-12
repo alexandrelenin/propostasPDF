@@ -1,0 +1,6 @@
+{
+  "name": "Gerador de Propostas PDF",
+  "description": "Um aplicativo web para criar, gerenciar e gerar propostas comerciais em formato PDF para soluções educacionais, com templates customizáveis e cálculos automáticos.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

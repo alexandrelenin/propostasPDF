@@ -1,0 +1,15 @@
+# Arquivos específicos do sistema operacional
+.DS_Store
+Thumbs.db
+
+node_modules
+
+# Pastas de IDEs (opcional, mas bom se você usa VS Code, WebStorm, etc.)
+ .vscode/
+ .idea/
+
+ # Arquivos de log
+ *.log
+
+ # Arquivos de ambiente local (se você criar um .env para testes futuros, NUNCA envie chaves de API nele)
+ # .env
