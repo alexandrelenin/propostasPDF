@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Proposal, TemplateSettings, ProposalItemCategory } from '../types';
@@ -142,8 +141,14 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   doc.setFontSize(9);
   doc.setFont('Helvetica', 'normal');
   const introLines = doc.splitTextToSize(settings.introductoryText, contentWidth);
-  doc.text(introLines, leftMargin, currentY);
+  doc.text(introLines, leftMargin, currentY, { align: 'justify', maxWidth: contentWidth });
   currentY += (introLines.length * doc.getLineHeight() / doc.internal.scaleFactor) + 6; // Space after intro
+
+  // 4. Main Items Table Title
+  doc.setFontSize(10);
+  doc.setFont('Helvetica', 'bold');
+  doc.text('Equipamentos, Instalações e Licenças', leftMargin, currentY);
+  currentY += 8; // Space after title
 
   // 4. Main Items Table
   const mainItemsHead = [['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']];
@@ -203,6 +208,12 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
         doc.addPage();
         currentY = 15;
     }
+    // Support Services Table Title
+    doc.setFontSize(10);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('Serviços de Suporte', leftMargin, currentY);
+    currentY += 8; // Space after title
+
     const supportItemNumber = (PROPOSAL_ITEM_DEFINITIONS.length + 1).toString();
     const supportDesc = SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(proposal.supportNumSchools, settings.supportServiceEmail);
     const supportHead = [['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']];

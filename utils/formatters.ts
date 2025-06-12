@@ -1,7 +1,6 @@
-
 export const formatCurrency = (value: number | undefined | null): string => {
-  if (value === undefined || value === null) return 'R$ 0,00';
-  return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (value === undefined || value === null) return 'R$\u00A00,00';
+  return `R$\u00A0${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 export const formatDateForDisplay = (dateString: string | undefined | null, location?: string): string => {
