@@ -132,14 +132,14 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   // 2. Header Title (New Style)
   doc.setFontSize(11);
   doc.setFont('Helvetica', 'bold');
-  const titleText = `SECRETARIA MUNICIPAL DE EDUCAÇÃO ${proposal.clientName.toUpperCase()}`;
+  const titleText = `SECRETARIA MUNICIPAL DE EDUCAÇÃO DE ${proposal.clientName.toUpperCase()}`;
   const titleWidth = doc.getTextWidth(titleText);
   const titleRectHeight = 10; // Height of the background rectangle
   const titleRectY = currentY - 5; // Adjust Y to center text vertically in rectangle
   
   // Draw rectangle background
   doc.setFillColor(222, 226, 230); // Light gray background
-  doc.rect(leftMargin, titleRectY, contentWidth, titleRectHeight, 'F');
+  doc.rect(leftMargin, titleRectY, contentWidth, titleRectHeight, 'FD');
 
   // Add text centered in the rectangle
   doc.setTextColor(33, 37, 41); // Dark text color
@@ -157,7 +157,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   const mainItemsTableTitle = 'Equipamentos, Instalações e Licenças';
   const mainItemsHead = [
     [{ content: mainItemsTableTitle, colSpan: 6, 
-       styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
+      // @ts-ignore
+      styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
     ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']
   ];
   const mainItemsBody = proposal.items.map(item => [
@@ -175,8 +176,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     body: mainItemsBody,
     theme: 'grid',
     margin: { left: leftMargin, right: rightMargin },
-    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center' },
-    bodyStyles: { fontSize: 8, textColor: [33, 37, 41] },
+    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0] },
+    bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.1, lineColor: [0, 0, 0] },
     columnStyles: {
       0: { halign: 'center', cellWidth: 'auto' }, // Item
       1: { halign: 'center', cellWidth: 'auto' }, // Unid.
@@ -185,6 +186,18 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       4: { halign: 'right', cellWidth: 'auto' }, // Valor Unitário
       5: { halign: 'right', cellWidth: 'auto' }  // Valor Total
     },
+    foot: [
+      [{ content: 'Investimento primeiro ano:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }, 
+       { content: formatCurrency(proposal.firstYearInvestment), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }]
+    ],
+    footStyles: {
+      fontSize: 9,
+      lineWidth: 0.1,
+      lineColor: [0, 0, 0],
+      cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
+    },
+    tableLineColor: [0, 0, 0],
+    tableLineWidth: 0.1,
     didParseCell: (data) => {
         if (data.section === 'body' && (data.column.index === 4 || data.column.index === 5)) {
             data.cell.styles.halign = 'right';
@@ -199,17 +212,6 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   });
   currentY = (doc as any).lastAutoTable.finalY + 8; // Space after table
 
-  // Summary for Main Items
-  doc.setFontSize(9);
-  doc.setFont('Helvetica', 'bold');
-  const investmentText = "Investimento primeiro ano:";
-  const investmentValue = formatCurrency(proposal.firstYearInvestment);
-  const investmentTextWidth = doc.getTextWidth(investmentText);
-  const investmentValueWidth = doc.getTextWidth(investmentValue);
-  doc.text(investmentText, doc.internal.pageSize.getWidth() - rightMargin - investmentValueWidth - investmentTextWidth - 2 , currentY);
-  doc.text(investmentValue, doc.internal.pageSize.getWidth() - rightMargin - investmentValueWidth, currentY);
-  currentY += 10;
-
   // 5. Support Services Table (with integrated title)
   if (proposal.includeSupportServices && proposal.supportNumSchools > 0 && proposal.supportAnnualTotal !== undefined && proposal.supportMonthlyTotal !== undefined) {
     if (currentY + 40 > doc.internal.pageSize.getHeight() - 30) { // Check if new table needs new page (approx height)
@@ -219,7 +221,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     const supportServicesTableTitle = 'Serviços de Suporte';
     const supportHead = [
       [{ content: supportServicesTableTitle, colSpan: 7, 
-         styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
+        // @ts-ignore
+        styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
       ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']
     ];
     const supportItemNumber = (PROPOSAL_ITEM_DEFINITIONS.length + 1).toString();
@@ -240,8 +243,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       body: supportBody,
       theme: 'grid',
       margin: { left: leftMargin, right: rightMargin },
-      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center' },
-      bodyStyles: { fontSize: 8, textColor: [33, 37, 41] },
+      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0] },
+      bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.1, lineColor: [0, 0, 0] },
       columnStyles: {
         0: { halign: 'center', cellWidth: 'auto' }, // Item
         1: { halign: 'center', cellWidth: 'auto' }, // Unid.
@@ -251,6 +254,18 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
         5: { halign: 'right', cellWidth: 'auto' }, // Valor Total Mensal
         6: { halign: 'right', cellWidth: 'auto' }  // Valor Total Anual
       },
+      foot: [
+        [{ content: 'Custeio segundo ano', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }, 
+         { content: formatCurrency(proposal.supportAnnualTotal), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }]
+      ],
+      footStyles: {
+        fontSize: 9,
+        lineWidth: 0.1,
+        lineColor: [0, 0, 0],
+        cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
+      },
+      tableLineColor: [0, 0, 0],
+      tableLineWidth: 0.1,
       didParseCell: (data) => {
         if (data.section === 'body' && (data.column.index >= 4)) {
             data.cell.styles.halign = 'right';
