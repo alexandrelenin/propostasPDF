@@ -154,3 +154,5 @@ O projeto foi configurado e testado para deploy nas seguintes plataformas:
     *   Temas de cores para a interface.
 
 Este resumo representa o estado atual do projeto e oferece um roteiro para seu crescimento e aprimoramento contínuos.
+
+This change is to trigger a new commit with the correct Git author email.
