@@ -176,8 +176,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     body: mainItemsBody,
     theme: 'grid',
     margin: { left: leftMargin, right: rightMargin },
-    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0] },
-    bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.1, lineColor: [0, 0, 0] },
+    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [0, 0, 0] },
+    bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [0, 0, 0] },
     columnStyles: {
       0: { halign: 'center', cellWidth: 'auto' }, // Item
       1: { halign: 'center', cellWidth: 'auto' }, // Unid.
@@ -192,12 +192,12 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     ],
     footStyles: {
       fontSize: 9,
-      lineWidth: 0.1,
+      lineWidth: 0.05,
       lineColor: [0, 0, 0],
       cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
     },
     tableLineColor: [0, 0, 0],
-    tableLineWidth: 0.1,
+    tableLineWidth: 0.05,
     didParseCell: (data) => {
         if (data.section === 'body' && (data.column.index === 4 || data.column.index === 5)) {
             data.cell.styles.halign = 'right';
@@ -243,8 +243,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       body: supportBody,
       theme: 'grid',
       margin: { left: leftMargin, right: rightMargin },
-      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.1, lineColor: [0, 0, 0] },
-      bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.1, lineColor: [0, 0, 0] },
+      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [0, 0, 0] },
+      bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [0, 0, 0] },
       columnStyles: {
         0: { halign: 'center', cellWidth: 'auto' }, // Item
         1: { halign: 'center', cellWidth: 'auto' }, // Unid.
@@ -260,12 +260,12 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       ],
       footStyles: {
         fontSize: 9,
-        lineWidth: 0.1,
+        lineWidth: 0.05,
         lineColor: [0, 0, 0],
         cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
       },
       tableLineColor: [0, 0, 0],
-      tableLineWidth: 0.1,
+      tableLineWidth: 0.05,
       didParseCell: (data) => {
         if (data.section === 'body' && (data.column.index >= 4)) {
             data.cell.styles.halign = 'right';
@@ -281,6 +281,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     currentY = (doc as any).lastAutoTable.finalY + 8;
 
     // Summary for Support Services
+    /*
     doc.setFontSize(9);
     doc.setFont('Helvetica', 'bold');
     const supportTotalText = "Total Anual (Serviços de Suporte):";
@@ -290,6 +291,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     doc.text(supportTotalText, doc.internal.pageSize.getWidth() - rightMargin - supportTotalValueWidth - supportTotalTextWidth - 2, currentY);
     doc.text(supportTotalValue, doc.internal.pageSize.getWidth() - rightMargin - supportTotalValueWidth, currentY);
     currentY += 10;
+    */
   }
   
   // 6. Proposal Date and Location
