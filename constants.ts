@@ -1,4 +1,3 @@
-
 import { TemplateSettings, ProposalItemCategory, ContactInfo, ProposalItemConfigEntry } from './types';
 
 export const INITIAL_CONTACT_INFO: ContactInfo = {
@@ -56,9 +55,40 @@ export const PROPOSAL_ITEM_DEFINITIONS: ProposalItemConfigEntry[] = [
   },
 ];
 
+// Função utilitária para número por extenso (0 a 9000)
+function numeroPorExtenso(n: number): string {
+  const unidades = ["zero", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+  const especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+  const dezenas = ["", "dez", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+  const centenas = ["", "cem", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+  if (n < 10) return unidades[n];
+  if (n < 20) return especiais[n - 10];
+  if (n < 100) {
+    const dez = Math.floor(n / 10);
+    const uni = n % 10;
+    return dezenas[dez] + (uni > 0 ? ` e ${unidades[uni]}` : "");
+  }
+  if (n === 100) return "cem";
+  if (n < 200) return "cento" + (n % 100 > 0 ? ` e ${numeroPorExtenso(n % 100)}` : "");
+  if (n < 1000) {
+    const cen = Math.floor(n / 100);
+    const resto = n % 100;
+    return centenas[cen] + (resto > 0 ? ` e ${numeroPorExtenso(resto)}` : "");
+  }
+  if (n === 1000) return "mil";
+  if (n < 2000) return "mil" + (n % 1000 > 0 ? ` e ${numeroPorExtenso(n % 1000)}` : "");
+  if (n < 10000) {
+    const mil = Math.floor(n / 1000);
+    const resto = n % 1000;
+    return unidades[mil] + " mil" + (resto > 0 ? ` e ${numeroPorExtenso(resto)}` : "");
+  }
+  return n.toString(); // fallback para números maiores
+}
+
 // Used for the "Serviços de Suporte" table's description
 export const SUPPORT_SERVICE_DESCRIPTION_TEMPLATE = (numSchools: number, contactEmail: string): string =>
-  `Prestação dos serviços de treinamento, suporte técnico, atualizações, integrações, customizações, hospedagem, manutenção preventiva e corretiva, presencial e remotamente, e envio de alertas por e-mail, notificação push mensagens de texto para celular de forma automática e em quantidade ilimitada, para ${numSchools} unidade(s) da Secretaria Municipal de Educação. Contato Suporte: ${contactEmail}`;
+  `Prestação dos serviços de treinamento, suporte técnico, atualizações, integrações, customizações, hospedagem, manutenção preventiva e corretiva, presencial e remotamente, e envio de alertas por e-mail, notificação push mensagens de texto para celular de forma automática e em quantidade ilimitada, para ${numSchools} (${numeroPorExtenso(numSchools)}) unidade(s) da Secretaria Municipal de Educação.`;
 
 export const SUPPORT_ITEM_CATEGORY = ProposalItemCategory.SUPPORT_SERVICES; // For easy access
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Proposal, TemplateSettings, ProposalItem, ProposalItemCategory, ProposalInputData } from '../types';
@@ -12,18 +11,19 @@ interface ProposalViewProps {
   onSaveProposal: (proposal: Proposal) => void;
   existingProposal?: Proposal | null;
   onNavigateToSaved: () => void;
+  onShowMessage: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSaveProposal, existingProposal, onNavigateToSaved }) => {
+const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
   const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form');
   const [formData, setFormData] = useState<ProposalInputData>({
     clientName: '',
     proposalLocation: 'Uberlândia', 
     proposalDate: getCurrentDateISO(),
-    itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, item) => {
-      acc[item.category] = 0;
+    itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, item: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => {
+      acc[item.category as ProposalItemCategory] = 0;
       return acc;
-    }, {} as ProposalInputData['itemQuantities']),
+    }, {} as Record<ProposalItemCategory, number>),
     includeSupportServices: true,
     supportNumSchools: 0, 
   });
@@ -36,10 +36,10 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
       clientName: '',
       proposalLocation: 'Uberlândia',
       proposalDate: getCurrentDateISO(),
-      itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, item) => {
-        acc[item.category] = 0;
+      itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, item: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => {
+        acc[item.category as ProposalItemCategory] = 0;
         return acc;
-      }, {} as ProposalInputData['itemQuantities']),
+      }, {} as Record<ProposalItemCategory, number>),
       includeSupportServices: true,
       supportNumSchools: 0,
     });
@@ -54,11 +54,11 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
         clientName: existingProposal.clientName,
         proposalLocation: existingProposal.proposalLocation,
         proposalDate: existingProposal.proposalDate,
-        itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, def) => {
+        itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, def: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => {
           const foundItem = existingProposal.items.find(item => item.category === def.category);
-          acc[def.category] = foundItem ? foundItem.quantity : 0;
+          acc[def.category as ProposalItemCategory] = foundItem ? foundItem.quantity : 0;
           return acc;
-        }, {} as ProposalInputData['itemQuantities']),
+        }, {} as Record<ProposalItemCategory, number>),
         includeSupportServices: existingProposal.includeSupportServices,
         supportNumSchools: existingProposal.supportNumSchools,
       });
@@ -71,7 +71,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
 
   const calculateProposal = useCallback(() => {
     const items: ProposalItem[] = PROPOSAL_ITEM_DEFINITIONS.map(config => {
-      const quantity = formData.itemQuantities[config.category] || 0;
+      const quantity = formData.itemQuantities[config.category as ProposalItemCategory] || 0;
       const unitPrice = templateSettings.defaultUnitPrices[config.category];
       return {
         id: config.id,
@@ -85,7 +85,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
       };
     });
 
-    const firstYearInvestment = items.reduce((sum, item) => sum + item.totalPrice, 0);
+    const firstYearInvestment = items.reduce((sum: number, item: ProposalItem) => sum + item.totalPrice, 0);
     let supportMonthlyTotal: number | undefined = undefined;
     let supportAnnualTotal: number | undefined = undefined;
 
@@ -120,10 +120,10 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
     const { name, value, type } = e.target;
     if (type === 'checkbox') {
       const { checked } = e.target as HTMLInputElement;
-      setFormData(prev => ({ ...prev, [name]: checked }));
+      setFormData((prev: ProposalInputData) => ({ ...prev, [name]: checked }));
     } else if (name.startsWith('itemQuantities.')) {
       const itemCat = name.split('.')[1] as ProposalItemCategory;
-      setFormData(prev => ({
+      setFormData((prev: ProposalInputData) => ({
         ...prev,
         itemQuantities: {
           ...prev.itemQuantities,
@@ -131,59 +131,53 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
         }
       }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev: ProposalInputData) => ({ ...prev, [name]: value }));
     }
   };
   
   const handleNumberInputChange = (name: keyof Pick<ProposalInputData, 'supportNumSchools'>, value: string) => {
-     setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
+    setFormData((prev: ProposalInputData) => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
   };
 
   const handleSave = () => {
     if (!currentProposal) return;
     if (!currentProposal.clientName.trim()) {
-      alert("O nome do cliente (Ex: NOME DA CIDADE - UF) é obrigatório.");
+      onShowMessage("O nome do cliente (Ex: NOME DA CIDADE - UF) é obrigatório.", "error");
       setActiveTab('form');
       return;
     }
     
-    const totalItemQuantities = currentProposal.items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItemQuantities = currentProposal.items.reduce((sum: number, item: ProposalItem) => sum + item.quantity, 0);
     if (totalItemQuantities === 0 && (!currentProposal.includeSupportServices || currentProposal.supportNumSchools === 0)) {
-        alert("Pelo menos um item da proposta (Equipamentos/Licenças ou Suporte) deve ter quantidade maior que zero.");
+        onShowMessage("Pelo menos um item da proposta (Equipamentos/Licenças ou Suporte) deve ter quantidade maior que zero.", "error");
         setActiveTab('form');
         return;
     }
 
     onSaveProposal(currentProposal);
-    alert(`Proposta para ${currentProposal.clientName} ${isEditing ? 'atualizada' : 'salva'} com sucesso!`);
-    if (isEditing) {
-      onNavigateToSaved(); 
-    } else {
-      resetForm(); 
-    }
+    // Não chamar resetForm() - manter os dados na tela
+    // Não chamar onNavigateToSaved() - permanecer na tela de edição
   };
 
   const handleGeneratePdf = async () => {
     if (!currentProposal) {
-      alert("Não há dados na proposta para gerar o PDF. Por favor, preencha o formulário.");
+      onShowMessage("Não há dados na proposta para gerar o PDF. Por favor, preencha o formulário.", "error");
       setActiveTab('form');
       return;
     }
     if (!currentProposal.clientName.trim()) {
-        alert("O nome do cliente é obrigatório para gerar o PDF.");
+        onShowMessage("O nome do cliente é obrigatório para gerar o PDF.", "error");
         setActiveTab('form');
         return;
     }
-    // A aba de preview continua útil para o usuário ver o layout HTML.
-    // A geração programática não depende mais dela, mas a experiência do usuário pode se beneficiar.
-    // setActiveTab('preview'); // Opcional, pode manter ou remover se a preview não for mais a "fonte da verdade" para o PDF.
     
     const fileName = `Proposta-${currentProposal.clientName.replace(/[^a-zA-Z0-9]/g, '_')}-${currentProposal.proposalDate}`;
     try {
       await generateProposalPdf(currentProposal, templateSettings, fileName);
+      onShowMessage(`PDF "${fileName}.pdf" gerado com sucesso!`, "success");
     } catch (error) {
        console.error("Erro ao gerar PDF programático:", error);
-       alert(`Ocorreu um erro ao gerar o PDF programático: ${error instanceof Error ? error.message : String(error)}`);
+       onShowMessage(`Ocorreu um erro ao gerar o PDF: ${error instanceof Error ? error.message : String(error)}`, "error");
     }
   };
   
@@ -212,7 +206,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
         </div>
 
         <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Itens da Proposta (Equipamentos, Instalações e Licenças)</h3>
-        {PROPOSAL_ITEM_DEFINITIONS.map(itemConfig => (
+        {PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => (
           <div key={itemConfig.id}>
             <label htmlFor={`itemQuantities.${itemConfig.category}`} className="block text-sm font-medium text-gray-700">
               {`Qtde. - ${itemConfig.defaultQuantityLabel}`}
@@ -328,7 +322,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
+                {items.map((item: ProposalItem) => (
                   <tr key={item.id} className="bg-white even:bg-slate-50">
                     <td className={centeredNumericColumn}>{item.itemNumber}</td>
                     <td className={centeredNumericColumn}>{item.unitType}</td>
@@ -376,7 +370,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
                     <td className={rightAlignedTextColumn}>{formatCurrency(supportAnnualTotal!)}</td>
                   </tr>
                 </tbody>
-                 <tfoot className="font-semibold bg-slate-100">
+                <tfoot className="font-semibold bg-slate-100">
                   <tr>
                     <td colSpan={6} className={`${rightAlignedTextColumn} font-bold ${tableFooterCellPadding}`}>Total Anual (Serviços de Suporte):</td>
                     <td className={`${rightAlignedTextColumn} font-bold ${tableFooterCellPadding}`}>{formatCurrency(supportAnnualTotal!)}</td>
@@ -386,27 +380,25 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
             </section>
           )}
 
-          <section className="mb-6 mt-8"> {/* Increased mt-8 for space above city/date, mb-6 for space below */}
-            <p className="text-xs whitespace-pre-line text-left leading-relaxed">{formatDateForDisplay(proposalDate, proposalLocation)}</p> 
+          {/* Bloco de local/data e rodapé */}
+          <section className="mb-6 mt-8">
+            <p className="text-xs whitespace-pre-line text-left leading-relaxed">
+              {formatDateForDisplay(proposalDate, proposalLocation)}
+            </p>
           </section>
 
-        </div> {/* End of flex-grow content wrapper */}
-        
-        {/* Footer Section - Positioned at the bottom by flex container */}
-        <footer className="mt-auto pt-4 pb-2 text-[9px] text-gray-700"> {/* Increased pt-4 for space above contact info */}
-            <p className="text-center text-[8.5px] leading-tight">{contactInfo.address}</p> 
-            <p className="text-center text-[8.5px] leading-tight mt-0.5">Telefone: {contactInfo.phone} – CNPJ: {contactInfo.cnpj} – {contactInfo.email}</p>
-        </footer>
+          <footer className="mt-auto pt-4 pb-2 text-[9px] text-gray-700">
+            <p className="text-center text-[8.5px] leading-tight">{contactInfo.address}</p>
+            <p className="text-center text-[8.5px] leading-tight mt-0.5">
+              Telefone: {contactInfo.phone} – CNPJ: {contactInfo.cnpj} – {contactInfo.email}
+            </p>
+          </footer>
+        </div>
       </div>
     );
   };
-  
-  const tabButtonClass = (tabName: 'form' | 'preview') => 
-    `px-4 py-2.5 -mb-px border-b-2 font-medium text-sm transition-colors duration-150 focus:outline-none ${
-      activeTab === tabName 
-        ? 'border-sky-600 text-sky-700' 
-        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-    }`;
+
+  const tabButtonClass = (tab: string) => `px-4 py-2 bg-slate-200 text-gray-700 rounded-md ${activeTab === tab ? 'bg-sky-100' : ''}`;
 
   return (
     <div className="flex flex-col h-[calc(100vh-theme(space.12))]">
@@ -421,7 +413,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
         </nav>
       </div>
 
-      <div className={`flex-grow overflow-y-auto p-1 md:p-2 ${activeTab === 'preview' ? 'bg-slate-300' : 'bg-slate-100'}`}>
+      <div className={`flex-grow overflow-y-auto p-1 md:p-2 ${activeTab === 'preview' ? 'bg-slate-300' : 'bg-slate-100'}`}> 
         {activeTab === 'form' && renderForm()}
         {activeTab === 'preview' && renderProposalPreview()}
       </div>

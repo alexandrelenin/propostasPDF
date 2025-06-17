@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { TemplateSettings, ContactInfo, ProposalItemCategory } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, INITIAL_TEMPLATE_SETTINGS } from '../constants';
@@ -110,7 +109,6 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(settings);
-    alert("Configurações do template salvas com sucesso!");
   };
 
   return (

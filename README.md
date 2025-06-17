@@ -1,5 +1,21 @@
 # Gerador de Propostas PDF
 
+## Novidades e Melhorias Recentes
+
+- **Responsividade:**  
+  A interface de propostas salvas agora é totalmente responsiva. Em telas pequenas (celular), as propostas são exibidas como cartões (cards) com botões de ação acessíveis. Em telas maiores, a visualização permanece em formato de tabela.
+- **Descrição dos Serviços de Suporte:**  
+  A descrição do item de serviços de suporte na proposta e no PDF foi aprimorada:
+  - O e-mail de contato não aparece mais na descrição.
+  - O número de unidades aparece seguido do valor por extenso em português, por exemplo: `para 9 (nove) unidade(s) ...`.
+  - A função cobre números de 0 a 9000, exibindo corretamente por extenso (ex: `2.345 (dois mil e trezentos e quarenta e cinco)`).
+- **Geração de PDF:**  
+  O PDF gerado reflete todas as melhorias acima, mantendo o layout profissional, com texto selecionável e tabelas bem formatadas.
+- **Mensagens do Sistema:**  
+  Mensagens de sucesso, erro e informação são exibidas de forma não intrusiva, logo abaixo do menu, melhorando a experiência do usuário.
+- **Fluxo de Salvamento:**  
+  Após salvar uma proposta, a tela permanece em modo de edição, facilitando a geração do PDF ou ajustes adicionais.
+
 ## Visão Geral do Projeto
 
 O "Gerador de Propostas PDF" é uma aplicação web frontend desenvolvida para simplificar a criação, gerenciamento e geração de propostas comerciais personalizadas em formato PDF. O foco inicial é atender às necessidades de propostas para soluções educacionais, oferecendo templates customizáveis e cálculos automáticos de valores.
@@ -42,6 +58,19 @@ A aplicação é construída como um Single Page Application (SPA) utilizando Re
     *   Configurações do template e propostas são salvas no `localStorage` do navegador, permitindo que os dados persistam entre sessões.
 *   **Navegação:**
     *   Uso de `react-router-dom` para navegação entre as seções: Nova Proposta, Propostas Salvas e Configurar Template.
+
+## Como Usar
+
+1. **Configurar Template:**  
+   Acesse "Configurar Template" para definir logo, textos, contatos e valores padrão.
+2. **Criar Nova Proposta:**  
+   Preencha os dados do cliente, local, data e quantidades. Inclua serviços de suporte se desejar.
+3. **Visualizar Proposta:**  
+   Use as abas para alternar entre edição e visualização em formato A4.
+4. **Salvar e Gerar PDF:**  
+   Salve a proposta e, se desejar, gere o PDF diretamente da tela de edição.
+5. **Gerenciar Propostas Salvas:**  
+   Acesse "Propostas Salvas" para visualizar, editar ou excluir propostas. Em dispositivos móveis, utilize os cards para acessar as ações.
 
 ## Tecnologias Utilizadas
 
