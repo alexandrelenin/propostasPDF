@@ -51,11 +51,35 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
 
   // 1. Company Logo
   let logoAddedSuccessfully = false;
-  if (settings.companyLogoUrl && settings.companyLogoUrl.startsWith('data:image')) {
+  let logoDataUrl = settings.companyLogoUrl;
+  if (settings.companyLogoUrl && settings.companyLogoUrl.startsWith('http')) {
+    // Baixar imagem externa e converter para base64
+    try {
+      const response = await fetch(settings.companyLogoUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      logoDataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          if (reader.result && typeof reader.result === 'string') {
+            resolve(reader.result);
+          } else {
+            reject('Erro ao converter logo para base64');
+          }
+        };
+        reader.onerror = () => reject('Erro ao ler logo como base64');
+        reader.readAsDataURL(blob);
+      });
+    } catch (e) {
+      console.error('Erro ao baixar/converter logo do Cloudinary:', e);
+      logoDataUrl = "";
+    }
+  }
+
+  if (logoDataUrl && logoDataUrl.startsWith('data:image')) {
     try {
         let imageFormat = '';
         // Regex to capture image subtype (png, jpeg, svg+xml)
-        const mimeTypeMatch = settings.companyLogoUrl.match(/^data:image\/(.+?)(;base64|,)/);
+        const mimeTypeMatch = logoDataUrl.match(/^data:image\/(.+?)(;base64|,)/);
 
         if (mimeTypeMatch && mimeTypeMatch[1]) {
             const subType = mimeTypeMatch[1].toLowerCase();
@@ -66,12 +90,11 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
         }
 
         if (!imageFormat) {
-            console.warn("Could not determine image format from data URL for logo:", settings.companyLogoUrl.substring(0, 70));
+            console.warn("Could not determine image format from data URL for logo:", logoDataUrl.substring(0, 70));
             throw new Error("Unsupported image type or malformed data URL for logo (could not determine format).");
         }
 
-        const imgProps = doc.getImageProperties(settings.companyLogoUrl);
-        
+        const imgProps = doc.getImageProperties(logoDataUrl);
         const logoHeight = 12; // mm
         let logoWidth;
 
@@ -79,10 +102,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
             logoWidth = (imgProps.width * logoHeight) / imgProps.height;
         } else if (imageFormat === 'SVG') {
             // Fallback for SVG if getImageProperties doesn't provide dimensions.
-            // Attempt to parse viewBox if available, or use a fixed aspect ratio.
-            // For the placeholder '0 0 150 50', aspect ratio is 150/50 = 3.
-            // This is a common issue with jsPDF and SVGs.
-            const svgContentMatch = settings.companyLogoUrl.match(/<svg[^>]*viewBox\s*=\s*['"]([\d\s\.\-]+)['"]/i);
+            const svgContentMatch = logoDataUrl.match(/<svg[^>]*viewBox\s*=\s*['"]([\d\s\.\-]+)['"]/i);
             if (svgContentMatch && svgContentMatch[1]) {
                 const viewBoxParts = svgContentMatch[1].split(/\s+/);
                 if (viewBoxParts.length === 4) {
@@ -108,7 +128,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
              throw new Error(`Invalid calculated logo width: ${logoWidth}`);
         }
 
-        doc.addImage(settings.companyLogoUrl, imageFormat, leftMargin, currentY, logoWidth, logoHeight);
+        doc.addImage(logoDataUrl, imageFormat, leftMargin, currentY, logoWidth, logoHeight);
         currentY += logoHeight + 8;
         logoAddedSuccessfully = true;
 
@@ -158,7 +178,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   const mainItemsHead = [
     [{ content: mainItemsTableTitle, colSpan: 6, 
       // @ts-ignore
-      styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
+      styles: { halign: 'center', fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const, fontStyle: 'bold' as const, lineWidth: 0.1, lineColor: [0, 0, 0] as const } }],
     ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']
   ];
   const mainItemsBody = proposal.items.map(item => [
@@ -172,11 +192,12 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
 
   autoTable(doc, {
     startY: currentY,
+    // @ts-ignore
     head: mainItemsHead,
     body: mainItemsBody,
     theme: 'grid',
     margin: { left: leftMargin, right: rightMargin },
-    headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [150, 150, 150] },
+    headStyles: { fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const, fontSize: 8, fontStyle: 'bold' as const, halign: 'center', lineWidth: 0.05, lineColor: [150, 150, 150] as const },
     bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [150, 150, 150] },
     columnStyles: {
       0: { halign: 'center', cellWidth: 'auto' }, // Item
@@ -187,14 +208,17 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       5: { halign: 'right', cellWidth: 'auto' }  // Valor Total
     },
     foot: [
-      [{ content: 'Investimento primeiro ano:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }, 
-       { content: formatCurrency(proposal.firstYearInvestment), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }]
+      [{ content: 'Investimento primeiro ano:', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }, 
+       { content: formatCurrency(proposal.firstYearInvestment), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }]
     ],
     footStyles: {
       fontSize: 9,
       lineWidth: 0.05,
       lineColor: [150, 150, 150],
-      cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
+      cellPadding: { top: 2, bottom: 2, left: 2, right: 2 },
+      fillColor: [222, 226, 230] as const,
+      textColor: [33, 37, 41] as const,
+      fontStyle: 'bold' as const
     },
     tableLineColor: [150, 150, 150],
     tableLineWidth: 0.05,
@@ -206,7 +230,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
             data.cell.styles.halign = 'left';
         }
     },
-    didDrawPage: (data) => {
+    didDrawPage: () => {
       // Footer will be added globally later
     }
   });
@@ -222,11 +246,11 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
     const supportHead = [
       [{ content: supportServicesTableTitle, colSpan: 7, 
         // @ts-ignore
-        styles: { halign: 'center', fillColor: [222, 226, 230], textColor: [33, 37, 41], fontStyle: 'bold', lineWidth: 0.1, lineColor: [0, 0, 0] } }],
+        styles: { halign: 'center', fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const, fontStyle: 'bold' as const, lineWidth: 0.1, lineColor: [0, 0, 0] as const } }],
       ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']
     ];
     const supportItemNumber = (PROPOSAL_ITEM_DEFINITIONS.length + 1).toString();
-    const supportDesc = SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(proposal.supportNumSchools, settings.supportServiceEmail);
+    const supportDesc = SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(proposal.supportNumSchools);
     const supportBody = [[
       supportItemNumber,
       'UN',
@@ -239,11 +263,12 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
 
     autoTable(doc, {
       startY: currentY,
+      // @ts-ignore
       head: supportHead,
       body: supportBody,
       theme: 'grid',
       margin: { left: leftMargin, right: rightMargin },
-      headStyles: { fillColor: [222, 226, 230], textColor: [33, 37, 41], fontSize: 8, fontStyle: 'bold', halign: 'center', lineWidth: 0.05, lineColor: [150, 150, 150] },
+      headStyles: { fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const, fontSize: 8, fontStyle: 'bold' as const, halign: 'center', lineWidth: 0.05, lineColor: [150, 150, 150] as const },
       bodyStyles: { fontSize: 8, textColor: [33, 37, 41], lineWidth: 0.05, lineColor: [150, 150, 150] },
       columnStyles: {
         0: { halign: 'center', cellWidth: 'auto' }, // Item
@@ -255,14 +280,17 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
         6: { halign: 'right', cellWidth: 'auto' }  // Valor Total Anual
       },
       foot: [
-        [{ content: 'Custeio segundo ano', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }, 
-         { content: formatCurrency(proposal.supportAnnualTotal), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold', fillColor: [222, 226, 230], textColor: [33, 37, 41] } }]
+        [{ content: 'Custeio segundo ano', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }, 
+         { content: formatCurrency(proposal.supportAnnualTotal), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }]
       ],
       footStyles: {
         fontSize: 9,
         lineWidth: 0.05,
         lineColor: [150, 150, 150],
-        cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }
+        cellPadding: { top: 2, bottom: 2, left: 2, right: 2 },
+        fillColor: [222, 226, 230] as const,
+        textColor: [33, 37, 41] as const,
+        fontStyle: 'bold' as const
       },
       tableLineColor: [150, 150, 150],
       tableLineWidth: 0.05,
@@ -274,7 +302,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
             data.cell.styles.halign = 'left';
         }
       },
-      didDrawPage: (data) => {
+      didDrawPage: () => {
         // Footer will be added globally later
       }
     });

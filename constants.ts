@@ -16,11 +16,11 @@ export const INITIAL_TEMPLATE_SETTINGS: TemplateSettings = {
   contactInfo: INITIAL_CONTACT_INFO,
   supportServiceEmail: "suporte@smarttechschoolmg.com.br", 
   defaultUnitPrices: {
-    [ProposalItemCategory.ELECTRONIC_DEVICE]: 7500.00,
-    [ProposalItemCategory.INSTALLATION_SERVICES]: 1600.00,
-    [ProposalItemCategory.STUDENT_LICENSE]: 29.90,
-    [ProposalItemCategory.SERVER_LICENSE]: 41.00,
-    [ProposalItemCategory.SUPPORT_SERVICES]: 790.00, 
+    ELECTRONIC_DEVICE: 7500.00,
+    INSTALLATION_SERVICES: 1600.00,
+    STUDENT_LICENSE: 29.90,
+    SERVER_LICENSE: 41.00,
+    SUPPORT_SERVICES: 790.00,
   },
 };
 
@@ -87,7 +87,7 @@ function numeroPorExtenso(n: number): string {
 }
 
 // Used for the "Serviços de Suporte" table's description
-export const SUPPORT_SERVICE_DESCRIPTION_TEMPLATE = (numSchools: number, contactEmail: string): string =>
+export const SUPPORT_SERVICE_DESCRIPTION_TEMPLATE = (numSchools: number): string =>
   `Prestação dos serviços de treinamento, suporte técnico, atualizações, integrações, customizações, hospedagem, manutenção preventiva e corretiva, presencial e remotamente, e envio de alertas por e-mail, notificação push mensagens de texto para celular de forma automática e em quantidade ilimitada, para ${numSchools} (${numeroPorExtenso(numSchools)}) unidade(s) da Secretaria Municipal de Educação.`;
 
 export const SUPPORT_ITEM_CATEGORY = ProposalItemCategory.SUPPORT_SERVICES; // For easy access

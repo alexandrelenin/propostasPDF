@@ -1,4 +1,3 @@
-
 export enum ProposalItemCategory {
   ELECTRONIC_DEVICE = 'ELECTRONIC_DEVICE', // Dispositivo eletrônico para registro de presença
   INSTALLATION_SERVICES = 'INSTALLATION_SERVICES', // Prestação dos serviços de instalação de cabeamento
@@ -76,4 +75,11 @@ export interface SavedProposalMeta {
   proposalDate: string;
   totalValue: number;
   createdAt: string;
+}
+
+export interface ProposalItemDefinition {
+  id: string;
+  label: string;
+  category: ProposalItemCategory;
+  description: string;
 }

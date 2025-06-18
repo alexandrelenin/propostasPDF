@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Proposal, TemplateSettings, ProposalItem, ProposalItemCategory, ProposalInputData } from '../types';
+import { Proposal, TemplateSettings, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, SUPPORT_SERVICE_DESCRIPTION_TEMPLATE } from '../constants';
 import { formatCurrency, formatDateForDisplay, getCurrentDateISO } from '../utils/formatters';
 // import { generatePdfFromElement } from '../services/pdfGenerator'; // Old way
@@ -11,7 +11,7 @@ interface ProposalViewProps {
   onSaveProposal: (proposal: Proposal) => void;
   existingProposal?: Proposal | null;
   onNavigateToSaved: () => void;
-  onShowMessage: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onShowMessage: (msg: string, type: 'success' | 'error') => void;
 }
 
 const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
@@ -20,10 +20,12 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
     clientName: '',
     proposalLocation: 'Uberlândia', 
     proposalDate: getCurrentDateISO(),
-    itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, item: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => {
-      acc[item.category as ProposalItemCategory] = 0;
-      return acc;
-    }, {} as Record<ProposalItemCategory, number>),
+    itemQuantities: {
+      [ProposalItemCategory.ELECTRONIC_DEVICE]: 0,
+      [ProposalItemCategory.INSTALLATION_SERVICES]: 0,
+      [ProposalItemCategory.STUDENT_LICENSE]: 0,
+      [ProposalItemCategory.SERVER_LICENSE]: 0,
+    },
     includeSupportServices: true,
     supportNumSchools: 0, 
   });
@@ -36,10 +38,12 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
       clientName: '',
       proposalLocation: 'Uberlândia',
       proposalDate: getCurrentDateISO(),
-      itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, item: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => {
-        acc[item.category as ProposalItemCategory] = 0;
-        return acc;
-      }, {} as Record<ProposalItemCategory, number>),
+      itemQuantities: {
+        [ProposalItemCategory.ELECTRONIC_DEVICE]: 0,
+        [ProposalItemCategory.INSTALLATION_SERVICES]: 0,
+        [ProposalItemCategory.STUDENT_LICENSE]: 0,
+        [ProposalItemCategory.SERVER_LICENSE]: 0,
+      },
       includeSupportServices: true,
       supportNumSchools: 0,
     });
@@ -54,11 +58,12 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
         clientName: existingProposal.clientName,
         proposalLocation: existingProposal.proposalLocation,
         proposalDate: existingProposal.proposalDate,
-        itemQuantities: PROPOSAL_ITEM_DEFINITIONS.reduce((acc, def: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => {
-          const foundItem = existingProposal.items.find(item => item.category === def.category);
-          acc[def.category as ProposalItemCategory] = foundItem ? foundItem.quantity : 0;
-          return acc;
-        }, {} as Record<ProposalItemCategory, number>),
+        itemQuantities: {
+          [ProposalItemCategory.ELECTRONIC_DEVICE]: existingProposal.items.find(item => item.category === ProposalItemCategory.ELECTRONIC_DEVICE)?.quantity || 0,
+          [ProposalItemCategory.INSTALLATION_SERVICES]: existingProposal.items.find(item => item.category === ProposalItemCategory.INSTALLATION_SERVICES)?.quantity || 0,
+          [ProposalItemCategory.STUDENT_LICENSE]: existingProposal.items.find(item => item.category === ProposalItemCategory.STUDENT_LICENSE)?.quantity || 0,
+          [ProposalItemCategory.SERVER_LICENSE]: existingProposal.items.find(item => item.category === ProposalItemCategory.SERVER_LICENSE)?.quantity || 0,
+        },
         includeSupportServices: existingProposal.includeSupportServices,
         supportNumSchools: existingProposal.supportNumSchools,
       });
@@ -70,14 +75,14 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
   }, [existingProposal, resetForm]);
 
   const calculateProposal = useCallback(() => {
-    const items: ProposalItem[] = PROPOSAL_ITEM_DEFINITIONS.map(config => {
-      const quantity = formData.itemQuantities[config.category as ProposalItemCategory] || 0;
-      const unitPrice = templateSettings.defaultUnitPrices[config.category];
+    const items: ProposalItem[] = PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: ProposalItemConfigEntry) => {
+      const quantity = formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0;
+      const unitPrice = templateSettings.defaultUnitPrices[itemConfig.category as ProposalItemCategory];
       return {
-        id: config.id,
-        itemNumber: config.itemNumber,
-        name: config.name, 
-        category: config.category,
+        id: itemConfig.id,
+        itemNumber: itemConfig.itemNumber,
+        name: itemConfig.name, 
+        category: itemConfig.category,
         quantity: quantity,
         unitPrice: unitPrice,
         totalPrice: quantity * unitPrice,
@@ -206,7 +211,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
         </div>
 
         <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Itens da Proposta (Equipamentos, Instalações e Licenças)</h3>
-        {PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: typeof PROPOSAL_ITEM_DEFINITIONS[number]) => (
+        {PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: ProposalItemConfigEntry) => (
           <div key={itemConfig.id}>
             <label htmlFor={`itemQuantities.${itemConfig.category}`} className="block text-sm font-medium text-gray-700">
               {`Qtde. - ${itemConfig.defaultQuantityLabel}`}
@@ -216,7 +221,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
               type="number"
               name={`itemQuantities.${itemConfig.category}`}
               id={`itemQuantities.${itemConfig.category}`}
-              value={formData.itemQuantities[itemConfig.category] || 0}
+              value={formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0}
               min="0"
               onChange={handleInputChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
@@ -246,7 +251,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
     if (!currentProposal) return <div className="text-center p-8 text-gray-500">Preencha os dados na aba "Editar Dados" para visualizar a proposta.</div>;
 
     const { clientName, proposalLocation, proposalDate, items, includeSupportServices, supportNumSchools, supportMonthlyTotal, supportAnnualTotal, firstYearInvestment } = currentProposal;
-    const { companyLogoUrl, introductoryText, contactInfo, supportServiceEmail } = templateSettings;
+    const { companyLogoUrl, introductoryText, contactInfo } = templateSettings;
     
     const cellBasePadding = "px-1"; // Base horizontal padding
     const descriptionCellPadding = `${cellBasePadding} py-1.5`; // Increased vertical padding for descriptions
@@ -364,7 +369,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
                     <td className={centeredNumericColumn}>5</td>
                     <td className={centeredNumericColumn}>UN</td>
                     <td className={centeredNumericColumn}>{supportNumSchools}</td>
-                    <td className={leftAlignedTextColumn}>{SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(supportNumSchools, templateSettings.supportServiceEmail)}</td>
+                    <td className={leftAlignedTextColumn}>{SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(supportNumSchools)}</td>
                     <td className={rightAlignedTextColumn}>{formatCurrency(templateSettings.defaultUnitPrices[SUPPORT_ITEM_CATEGORY])}</td>
                     <td className={rightAlignedTextColumn}>{formatCurrency(supportMonthlyTotal!)}</td>
                     <td className={rightAlignedTextColumn}>{formatCurrency(supportAnnualTotal!)}</td>
@@ -390,7 +395,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
           <footer className="mt-auto pt-4 pb-2 text-[9px] text-gray-700">
             <p className="text-center text-[8.5px] leading-tight">{contactInfo.address}</p>
             <p className="text-center text-[8.5px] leading-tight mt-0.5">
-              Telefone: {contactInfo.phone} – CNPJ: {contactInfo.cnpj} – {contactInfo.email}
+              Telefone: {contactInfo.phone} – CNPJ: {contactInfo.cnpj}
             </p>
           </footer>
         </div>
