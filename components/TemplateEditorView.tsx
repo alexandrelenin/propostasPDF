@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { TemplateSettings, ContactInfo, ProposalItemCategory } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, INITIAL_TEMPLATE_SETTINGS } from '../constants';
 
+// === CONFIGURAÇÃO DO CLOUDINARY ===
+const CLOUDINARY_CLOUD_NAME = "dfezexws1"; // Substitua pelo seu cloud name
+const CLOUDINARY_UPLOAD_PRESET = "propostasPDF"; // Substitua pelo seu upload preset unsigned
+// ================================
+
 interface TemplateEditorViewProps {
   initialSettings: TemplateSettings;
   onSave: (settings: TemplateSettings) => void;
@@ -80,7 +85,7 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
     }));
   };
 
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) { // 2MB limit
@@ -90,11 +95,24 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
         }
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSettings(prev => ({ ...prev, companyLogoUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      // Upload para o Cloudinary
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method: "POST",
+          body: formData
+        });
+        const data = await res.json();
+        if (data.secure_url) {
+          setSettings(prev => ({ ...prev, companyLogoUrl: data.secure_url }));
+        } else {
+          alert("Erro ao fazer upload da imagem para o Cloudinary. Verifique as credenciais e tente novamente.");
+        }
+      } catch (err) {
+        alert("Erro ao fazer upload da imagem para o Cloudinary.");
+      }
     }
   };
 
