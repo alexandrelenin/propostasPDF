@@ -177,7 +177,6 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
       <Navbar onCreateNewProposal={handleCreateNewProposal} />
-      
       {/* Área de mensagens do sistema */}
       <div className="container mx-auto px-4 md:px-6">
         <SystemMessage 
