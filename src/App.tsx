@@ -3,9 +3,11 @@ import { HashRouter, Routes, Route, Link, useLocation, useNavigate } from 'react
 import ProposalView from './components/ProposalView';
 import TemplateEditorView from './components/TemplateEditorView';
 import SavedProposalsView from './components/SavedProposalsView';
-import { TemplateSettings, Proposal, SavedProposalMeta } from './types';
+import TemplatesView from './components/TemplatesView';
+import CostsCrudView from './components/CostsCrudView';
+import { Template, TemplateSettings, Proposal, SavedProposalMeta } from './types';
 import { INITIAL_TEMPLATE_SETTINGS } from './constants';
-import { saveTemplate, getTemplate } from './services/templateService';
+import { saveTemplate, getTemplateById } from './services/templateService';
 import { saveProposal, getAllProposals, getProposalById, deleteProposal } from './services/proposalService';
 
 interface NavbarProps {
@@ -31,6 +33,8 @@ const Navbar: React.FC<NavbarProps> = ({ onCreateNewProposal }) => {
           <Link to="/" onClick={onCreateNewProposal} className={linkClass('/')}>Nova Proposta</Link>
           <Link to="/saved" className={linkClass('/saved')}>Propostas Salvas</Link>
           <Link to="/template" className={linkClass('/template')}>Configurar Template</Link>
+          <Link to="/templates" className={linkClass('/templates')}>Templates</Link>
+          <Link to="/costs" className={linkClass('/costs')}>Custos</Link>
         </div>
       </div>
     </nav>
@@ -69,7 +73,13 @@ const SystemMessage: React.FC<SystemMessageProps> = ({ message, type, onClear })
 };
 
 const App: React.FC = () => {
-  const [templateSettings, setTemplateSettings] = useState<TemplateSettings>(INITIAL_TEMPLATE_SETTINGS);
+  const initialTemplate: Template = {
+    ...INITIAL_TEMPLATE_SETTINGS,
+    id: 'default',
+    name: 'Template Padrão',
+    isDefault: true,
+  };
+  const [templateSettings, setTemplateSettings] = useState<Template>(initialTemplate);
   const [savedProposalsMeta, setSavedProposalsMeta] = useState<SavedProposalMeta[]>([]);
   const [editingProposal, setEditingProposal] = useState<Proposal | null | undefined>(undefined);
   const [systemMessage, setSystemMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -88,13 +98,7 @@ const App: React.FC = () => {
         createdAt: p.createdAt,
       })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setSavedProposalsMeta(meta);
-      const template = await getTemplate();
-      console.log('Template carregado do Firestore:', template);
-      if (template) {
-        setTemplateSettings(template);
-      } else {
-        setTemplateSettings(INITIAL_TEMPLATE_SETTINGS);
-      }
+      setTemplateSettings(initialTemplate);
     }
     fetchProposalsAndTemplate();
   }, []);
@@ -124,8 +128,14 @@ const App: React.FC = () => {
   };
 
   const handleSaveTemplate = async (settings: TemplateSettings) => {
-    setTemplateSettings(settings);
     await saveTemplate(settings);
+    // Buscar o template padrão atualizado (id: 'default')
+    const updated = await getTemplateById('default');
+    if (updated) {
+      setTemplateSettings(updated);
+    } else {
+      setTemplateSettings(prev => ({ ...prev, ...settings }));
+    }
     showSystemMessage("Configurações do template salvas com sucesso!", "success");
   };
 
@@ -222,6 +232,11 @@ const App: React.FC = () => {
               />
             } 
           />
+          <Route 
+            path="/templates" 
+            element={<TemplatesView />} 
+          />
+          <Route path="/costs" element={<CostsCrudView />} />
         </Routes>
       </main>
       <footer className="bg-slate-700 text-center text-xs text-slate-300 p-3 no-print">

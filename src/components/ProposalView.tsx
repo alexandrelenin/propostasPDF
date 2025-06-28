@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Proposal, TemplateSettings, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry } from '../types';
+import { Proposal, TemplateSettings, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry, Cost } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, SUPPORT_SERVICE_DESCRIPTION_TEMPLATE } from '../constants';
 import { formatCurrency, formatDateForDisplay, getCurrentDateISO } from '../utils/formatters';
 // import { generatePdfFromElement } from '../services/pdfGenerator'; // Old way
 import { generateProposalPdf } from '../services/pdfGenerator'; // New programmatic way
+import { getAllCosts } from '../services/costService';
 
 interface ProposalViewProps {
   templateSettings: TemplateSettings;
@@ -15,7 +16,7 @@ interface ProposalViewProps {
 }
 
 const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
-  const [activeTab, setActiveTab] = useState<'form' | 'preview'>('form');
+  const [activeTab, setActiveTab] = useState<'form' | 'preview' | 'finance'>('form');
   const [formData, setFormData] = useState<ProposalInputData>({
     clientName: '',
     proposalLocation: 'Uberlândia', 
@@ -32,6 +33,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
 
   const [currentProposal, setCurrentProposal] = useState<Proposal | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [costs, setCosts] = useState<Cost[]>([]);
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -73,6 +75,14 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
       resetForm();
     }
   }, [existingProposal, resetForm]);
+
+  useEffect(() => {
+    async function fetchCosts() {
+      const all = await getAllCosts();
+      setCosts(all);
+    }
+    fetchCosts();
+  }, []);
 
   const calculateProposal = useCallback(() => {
     const items: ProposalItem[] = PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: ProposalItemConfigEntry) => {
@@ -151,15 +161,27 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
       setActiveTab('form');
       return;
     }
-    
     const totalItemQuantities = currentProposal.items.reduce((sum: number, item: ProposalItem) => sum + item.quantity, 0);
     if (totalItemQuantities === 0 && (!currentProposal.includeSupportServices || currentProposal.supportNumSchools === 0)) {
-        onShowMessage("Pelo menos um item da proposta (Equipamentos/Licenças ou Suporte) deve ter quantidade maior que zero.", "error");
-        setActiveTab('form');
-        return;
+      onShowMessage("Pelo menos um item da proposta (Equipamentos/Licenças ou Suporte) deve ter quantidade maior que zero.", "error");
+      setActiveTab('form');
+      return;
     }
-
-    onSaveProposal(currentProposal);
+    // Buscar vigência de custo vigente para a data da proposta
+    const vigente = costs
+      .filter(c => c.vigenciaInicio <= currentProposal.proposalDate)
+      .sort((a, b) => b.vigenciaInicio.localeCompare(a.vigenciaInicio))[0];
+    if (!vigente) {
+      onShowMessage("Não há custo vigente cadastrado para a data da proposta.", "error");
+      return;
+    }
+    const custosVigentes = costs.filter(c => c.vigenciaInicio === vigente.vigenciaInicio && c.id.endsWith(`-${vigente.vigenciaInicio}`));
+    if (custosVigentes.length !== 5) {
+      onShowMessage("Não foi possível encontrar todos os custos da vigência associada.", "error");
+      return;
+    }
+    const proposalWithCost = { ...currentProposal, costVigencia: vigente.vigenciaInicio };
+    onSaveProposal(proposalWithCost);
     // Não chamar resetForm() - manter os dados na tela
     // Não chamar onNavigateToSaved() - permanecer na tela de edição
   };
@@ -403,6 +425,109 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
     );
   };
 
+  // Função para renderizar a aba de projeção financeira
+  const renderFinanceProjection = () => {
+    // Buscar vigência de custo vigente para a data do formulário
+    const dataRef = formData.proposalDate || getCurrentDateISO();
+    const vigente = costs
+      .filter(c => c.vigenciaInicio <= dataRef)
+      .sort((a, b) => b.vigenciaInicio.localeCompare(a.vigenciaInicio))[0];
+    if (!vigente) {
+      return <div className="p-6 text-red-600">Não há custo vigente cadastrado para a data da proposta.</div>;
+    }
+    const custosVigentes = costs.filter(c => c.vigenciaInicio === vigente.vigenciaInicio && c.id.endsWith(`-${vigente.vigenciaInicio}`));
+    if (custosVigentes.length !== 5) {
+      return <div className="p-6 text-red-600">Não foi possível encontrar todos os custos da vigência associada.</div>;
+    }
+    // Mapear itens da proposta para custos
+    const itens = [
+      { id: '1', label: 'Equipamento Facial iD', categoria: 'ELECTRONIC_DEVICE' },
+      { id: '2', label: 'Configuração e ativação', categoria: 'INSTALLATION_SERVICES' },
+      { id: '3', label: 'Software gestão escolar', categoria: 'STUDENT_LICENSE' },
+      { id: '4', label: 'Software ponto e modulação', categoria: 'SERVER_LICENSE' },
+      { id: '5', label: 'Suporte', categoria: 'SUPPORT_SERVICES' },
+    ];
+    const getItemQuantity = (cat: string) => {
+      if (cat === 'SUPPORT_SERVICES') return formData.supportNumSchools;
+      const found = currentProposal?.items.find(i => i.category === cat);
+      return found ? found.quantity : 0;
+    };
+    const getItemUnitPrice = (cat: string) => {
+      if (cat === 'SUPPORT_SERVICES') {
+        // Buscar do custo vigente (valorVendaMin)
+        const custo = custosVigentes.find(c => c.id.startsWith('5-'));
+        return custo ? custo.valorVendaMin : 0;
+      }
+      const found = currentProposal?.items.find(i => i.category === cat);
+      return found ? found.unitPrice : 0;
+    };
+    let totalCusto = 0, totalVenda = 0, totalLucro = 0;
+    return (
+      <div className="p-4">
+        <h2 className="text-xl font-bold text-sky-700 mb-2">Projeção Financeira</h2>
+        <div className="mb-2 text-xs text-gray-500">
+          Vigência utilizada: {vigente.vigenciaInicio.split('T')[0]}<br />
+          Cidade: <span className="font-semibold">{formData.proposalLocation || formData.clientName}</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-slate-200">
+              <tr>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Item</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Qtde</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Custo Unit.</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Custo Total</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Venda Unit.</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Venda Total</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Lucro (R$)</th>
+                <th className="px-2 py-2 text-left text-xs font-medium text-gray-600 uppercase">Lucro (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {itens.map(item => {
+                const custo = custosVigentes.find(c => c.id === `${item.id}-${vigente.vigenciaInicio}`);
+                const qtde = getItemQuantity(item.categoria);
+                const vendaUnit = getItemUnitPrice(item.categoria);
+                const custoUnit = custo ? custo.valorCompra : 0;
+                const custoTotal = custoUnit * qtde;
+                const vendaTotal = vendaUnit * qtde;
+                const lucro = vendaTotal - custoTotal;
+                const lucroPerc = custoTotal > 0 ? (lucro / custoTotal) * 100 : 0;
+                totalCusto += custoTotal;
+                totalVenda += vendaTotal;
+                totalLucro += lucro;
+                return (
+                  <tr key={item.id}>
+                    <td className="px-2 py-2 text-sm text-gray-700">{item.label}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">{qtde}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">R$ {custoUnit.toFixed(2)}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">R$ {custoTotal.toFixed(2)}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">R$ {vendaUnit.toFixed(2)}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">R$ {vendaTotal.toFixed(2)}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">R$ {lucro.toFixed(2)}</td>
+                    <td className="px-2 py-2 text-sm text-gray-700">{lucroPerc.toFixed(1)}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td className="px-2 py-2 text-sm font-bold text-gray-800">Totais</td>
+                <td></td>
+                <td></td>
+                <td className="px-2 py-2 text-sm font-bold text-gray-800">R$ {totalCusto.toFixed(2)}</td>
+                <td></td>
+                <td className="px-2 py-2 text-sm font-bold text-gray-800">R$ {totalVenda.toFixed(2)}</td>
+                <td className="px-2 py-2 text-sm font-bold text-gray-800">R$ {totalLucro.toFixed(2)}</td>
+                <td className="px-2 py-2 text-sm font-bold text-gray-800">{totalCusto > 0 ? (totalLucro / totalCusto * 100).toFixed(1) : '0.0'}%</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   const tabButtonClass = (tab: string) => `px-4 py-2 bg-slate-200 text-gray-700 rounded-md ${activeTab === tab ? 'bg-sky-100' : ''}`;
 
   return (
@@ -415,12 +540,16 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
           <button onClick={() => setActiveTab('preview')} className={tabButtonClass('preview')}>
             Visualizar Proposta (HTML)
           </button>
+          <button onClick={() => setActiveTab('finance')} className={tabButtonClass('finance')}>
+            Projeção Financeira
+          </button>
         </nav>
       </div>
 
       <div className={`flex-grow overflow-y-auto p-1 md:p-2 ${activeTab === 'preview' ? 'bg-slate-300' : 'bg-slate-100'}`}> 
         {activeTab === 'form' && renderForm()}
         {activeTab === 'preview' && renderProposalPreview()}
+        {activeTab === 'finance' && renderFinanceProjection()}
       </div>
       
       <div className="p-3 bg-white border-t border-gray-200 shadow-md no-print">

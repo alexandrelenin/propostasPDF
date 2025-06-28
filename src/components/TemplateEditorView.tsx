@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TemplateSettings, ContactInfo, ProposalItemCategory } from '../types';
+import { Template, ContactInfo, ProposalItemCategory } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, INITIAL_TEMPLATE_SETTINGS } from '../constants';
 
 // === CONFIGURAÇÃO DO CLOUDINARY ===
@@ -8,8 +8,9 @@ const CLOUDINARY_UPLOAD_PRESET = "propostasPDF"; // Substitua pelo seu upload pr
 // ================================
 
 interface TemplateEditorViewProps {
-  initialSettings: TemplateSettings;
-  onSave: (settings: TemplateSettings) => void;
+  initialSettings: Template;
+  onSave: (settings: Template) => void;
+  onDelete?: (id: string) => void;
 }
 
 const InputField: React.FC<{label: string, value: string, onChange: (value: string) => void, type?: string, placeholder?: string, textArea?: boolean }> = 
@@ -53,15 +54,15 @@ const NumberInputField: React.FC<{label: string, value: number, onChange: (value
 );
 
 
-const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings, onSave }) => {
-  const [settings, setSettings] = useState<TemplateSettings>(initialSettings);
+const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings, onSave, onDelete }) => {
+  const [settings, setSettings] = useState<Template>(initialSettings);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSettings(initialSettings);
   }, [initialSettings]);
 
-  const handleInputChange = <K extends keyof TemplateSettings>(key: K, value: TemplateSettings[K]) => {
+  const handleFieldChange = (key: keyof Template, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -133,6 +134,27 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
     <div className="container mx-auto p-4 md:p-8 bg-white shadow-xl rounded-lg">
       <h1 className="text-3xl font-bold text-sky-700 mb-8">Editar Template da Proposta</h1>
       <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Template</label>
+            <input
+              type="text"
+              value={settings.name}
+              onChange={e => handleFieldChange('name', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+              required
+            />
+          </div>
+          <div className="flex items-center mt-6">
+            <input
+              type="checkbox"
+              checked={settings.isDefault}
+              onChange={e => handleFieldChange('isDefault', e.target.checked)}
+              className="mr-2"
+            />
+            <label className="text-sm">Definir como padrão</label>
+          </div>
+        </div>
         
         <div>
           <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Informações Gerais</h2>
@@ -177,7 +199,7 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
             )}
           </div>
 
-          <InputField label="Texto Introdutório da Proposta (Parágrafo abaixo do cabeçalho)" value={settings.introductoryText} onChange={val => handleInputChange('introductoryText', val)} textArea={true}/>
+          <InputField label="Texto Introdutório da Proposta (Parágrafo abaixo do cabeçalho)" value={settings.introductoryText} onChange={val => handleFieldChange('introductoryText', val)} textArea={true}/>
         </div>
 
         <div>
@@ -210,7 +232,7 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
            <InputField 
               label="E-mail para Contato de Suporte (usado na descrição do item de suporte)" 
               value={settings.supportServiceEmail} 
-              onChange={val => handleInputChange('supportServiceEmail', val)}
+              onChange={val => handleFieldChange('supportServiceEmail', val)}
               placeholder="suporte@suaempresa.com"
             />
         </div>

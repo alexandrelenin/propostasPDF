@@ -37,6 +37,7 @@ export interface Proposal {
   supportMonthlyTotal?: number;
   supportAnnualTotal?: number;
   createdAt: string; // ISO date string
+  costVigencia: string; // Vigência do custo vigente associado
 }
 
 export interface ContactInfo {
@@ -60,13 +61,14 @@ export interface TemplateSettings {
   };
 }
 
-export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvestment' | 'supportMonthlyTotal' | 'supportAnnualTotal' | 'createdAt'> & {
+export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvestment' | 'supportMonthlyTotal' | 'supportAnnualTotal' | 'createdAt' | 'costVigencia'> & {
   itemQuantities: {
     [ProposalItemCategory.ELECTRONIC_DEVICE]: number;
     [ProposalItemCategory.INSTALLATION_SERVICES]: number;
     [ProposalItemCategory.STUDENT_LICENSE]: number;
     [ProposalItemCategory.SERVER_LICENSE]: number;
   };
+  costVigencia?: string;
 };
 
 export interface SavedProposalMeta {
@@ -82,4 +84,22 @@ export interface ProposalItemDefinition {
   label: string;
   category: ProposalItemCategory;
   description: string;
+}
+
+export interface Template extends TemplateSettings {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
+export interface Cost {
+  id: string; // UUID
+  descricao: string;
+  formaCobranca: string;
+  valorCompra: number;
+  valorVendaMin: number;
+  valorVendaMax: number;
+  vigenciaInicio: string; // ISO date string
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
 }
