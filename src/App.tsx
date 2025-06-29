@@ -4,6 +4,7 @@ import ProposalView from './components/ProposalView';
 import SavedProposalsView from './components/SavedProposalsView';
 import TemplatesView from './components/TemplatesView';
 import CostsCrudView from './components/CostsCrudView';
+import AudioUpload from './components/AudioUpload';
 import { Template, Proposal, SavedProposalMeta } from './types';
 import { INITIAL_TEMPLATE_SETTINGS } from './constants';
 import { saveTemplate, getTemplateById, getAllTemplates, getDefaultTemplate } from './services/templateService';
@@ -33,6 +34,7 @@ const Navbar: React.FC<NavbarProps> = ({ onCreateNewProposal }) => {
           <Link to="/saved" className={linkClass('/saved')}>Propostas Salvas</Link>
           <Link to="/templates" className={linkClass('/templates')}>Templates</Link>
           <Link to="/costs" className={linkClass('/costs')}>Custos</Link>
+          <Link to="/audio-upload" className={linkClass('/audio-upload')}>Transcrição Áudio</Link>
         </div>
       </div>
     </nav>
@@ -252,6 +254,10 @@ const App: React.FC = () => {
             element={<TemplatesView />} 
           />
           <Route path="/costs" element={<CostsCrudView />} />
+          <Route 
+            path="/audio-upload" 
+            element={<AudioUpload />} 
+          />
         </Routes>
       </main>
       <footer className="bg-slate-700 text-center text-xs text-slate-300 p-3 no-print">
