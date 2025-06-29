@@ -81,7 +81,7 @@ const AudioUpload: React.FC = () => {
         setTranscript(data.text);
         setParsed(parseProposalData(data.text));
       } else {
-        setError(data.error || 'Erro desconhecido');
+        setError(data.error ? `${data.error} (${data.details || ''})` : 'Erro desconhecido');
       }
     } catch (err) {
       setError('Erro ao enviar áudio');
