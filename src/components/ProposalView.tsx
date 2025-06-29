@@ -58,7 +58,28 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
   }, []);
   
   useEffect(() => {
-    if (existingProposal) {
+    // Preenchimento automático a partir do áudio
+    const audioData = localStorage.getItem('proposta_audio');
+    if (audioData) {
+      try {
+        const parsed = JSON.parse(audioData);
+        setFormData(prev => ({
+          ...prev,
+          clientName: parsed.cidade || '',
+          proposalLocation: parsed.cidade || '',
+          // Os números extraídos são mapeados para as quantidades dos itens na ordem
+          itemQuantities: {
+            [ProposalItemCategory.ELECTRONIC_DEVICE]: parsed.numeros[0] || 0,
+            [ProposalItemCategory.INSTALLATION_SERVICES]: parsed.numeros[1] || 0,
+            [ProposalItemCategory.STUDENT_LICENSE]: parsed.numeros[2] || 0,
+            [ProposalItemCategory.SERVER_LICENSE]: parsed.numeros[3] || 0,
+          },
+          includeSupportServices: true,
+          supportNumSchools: parsed.numeros[4] || 0,
+        }));
+      } catch {}
+      localStorage.removeItem('proposta_audio');
+    } else if (existingProposal) {
       setFormData({
         clientName: existingProposal.clientName,
         proposalLocation: existingProposal.proposalLocation,

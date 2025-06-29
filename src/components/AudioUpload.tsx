@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Função simples para extrair dados do texto transcrito (exemplo)
 function parseProposalData(text: string) {
@@ -28,6 +29,7 @@ const AudioUpload: React.FC = () => {
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const navigate = useNavigate();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] || null);
@@ -86,6 +88,13 @@ const AudioUpload: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePreencherProposta = () => {
+    if (!parsed) return;
+    // Salvar os dados extraídos no localStorage para ProposalView consumir
+    localStorage.setItem('proposta_audio', JSON.stringify(parsed));
+    navigate('/');
   };
 
   return (
@@ -148,6 +157,12 @@ const AudioUpload: React.FC = () => {
             <li><b>Dados (números):</b> {parsed.numeros.length > 0 ? parsed.numeros.join(', ') : <span className="text-red-500">(não encontrado)</span>}</li>
             <li><b>Template:</b> {parsed.template || <span className="text-red-500">(não encontrado)</span>}</li>
           </ul>
+          <button
+            className="mt-4 bg-sky-700 text-white px-4 py-2 rounded hover:bg-sky-800"
+            onClick={handlePreencherProposta}
+          >
+            Preencher proposta com estes dados
+          </button>
         </div>
       )}
     </div>
