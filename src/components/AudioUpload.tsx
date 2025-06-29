@@ -1,10 +1,28 @@
 import React, { useRef, useState } from 'react';
 
+// Função simples para extrair dados do texto transcrito (exemplo)
+function parseProposalData(text: string) {
+  // Exemplo: "faça uma proposta para a cidade Uberlândia com dados 10 20 30 40 50 e use o template Padrão"
+  const match = text.match(/cidade\s+([\wÀ-ÿ ]+)/i);
+  const cidade = match ? match[1].trim() : '';
+  const dados = text.match(/dados?\s+([\d\s]+)/i);
+  const numeros = dados ? dados[1].trim().split(/\s+/).map(Number) : [];
+  const templateMatch = text.match(/template\s+([\wÀ-ÿ ]+)/i);
+  const template = templateMatch ? templateMatch[1].trim() : '';
+  return {
+    cidade,
+    numeros,
+    template,
+    textoOriginal: text
+  };
+}
+
 const AudioUpload: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [transcript, setTranscript] = useState('');
+  const [parsed, setParsed] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [recording, setRecording] = useState(false);
@@ -16,11 +34,13 @@ const AudioUpload: React.FC = () => {
     setAudioBlob(null);
     setAudioUrl(null);
     setTranscript('');
+    setParsed(null);
     setError('');
   };
 
   const startRecording = async () => {
     setTranscript('');
+    setParsed(null);
     setError('');
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaRecorderRef.current = new MediaRecorder(stream);
@@ -47,6 +67,7 @@ const AudioUpload: React.FC = () => {
     if (!audio) return;
     setLoading(true);
     setTranscript('');
+    setParsed(null);
     setError('');
     try {
       const res = await fetch('/api/transcribe-audio', {
@@ -56,6 +77,7 @@ const AudioUpload: React.FC = () => {
       const data = await res.json();
       if (data.text) {
         setTranscript(data.text);
+        setParsed(parseProposalData(data.text));
       } else {
         setError(data.error || 'Erro desconhecido');
       }
@@ -68,7 +90,16 @@ const AudioUpload: React.FC = () => {
 
   return (
     <div className="max-w-lg mx-auto p-4 bg-white rounded shadow mt-8">
-      <h2 className="text-xl font-bold mb-4 text-sky-700">Transcrição de Áudio (AssemblyAI)</h2>
+      <h2 className="text-xl font-bold mb-2 text-sky-700">Transcrição de Áudio (AssemblyAI)</h2>
+      <div className="mb-4 p-3 bg-sky-50 border border-sky-200 rounded">
+        <h3 className="font-semibold mb-1 text-sky-800">Como usar:</h3>
+        <ul className="list-disc pl-5 text-sm text-sky-900">
+          <li>Fale de forma clara e pausada.</li>
+          <li>Exemplo de frase: <br /><span className="italic text-sky-700">"Faça uma proposta para a cidade Uberlândia com dados 10 20 30 40 50 e use o template Padrão"</span></li>
+          <li>Inclua: <b>nome da cidade</b>, <b>os números dos dados</b> (quantidades), e <b>nome do template</b>.</li>
+          <li>Você pode gravar o áudio ou enviar um arquivo pronto.</li>
+        </ul>
+      </div>
       <div className="mb-4">
         <label className="block font-medium mb-1">Gravar Áudio</label>
         <button
@@ -107,6 +138,16 @@ const AudioUpload: React.FC = () => {
         <div className="mt-4">
           <h3 className="font-semibold mb-2">Transcrição:</h3>
           <pre className="bg-slate-100 p-2 rounded whitespace-pre-wrap text-sm">{transcript}</pre>
+        </div>
+      )}
+      {parsed && (
+        <div className="mt-4 bg-slate-50 p-3 rounded border">
+          <h3 className="font-semibold mb-2 text-sky-700">Dados extraídos para conferência:</h3>
+          <ul className="text-sm">
+            <li><b>Cidade:</b> {parsed.cidade || <span className="text-red-500">(não encontrado)</span>}</li>
+            <li><b>Dados (números):</b> {parsed.numeros.length > 0 ? parsed.numeros.join(', ') : <span className="text-red-500">(não encontrado)</span>}</li>
+            <li><b>Template:</b> {parsed.template || <span className="text-red-500">(não encontrado)</span>}</li>
+          </ul>
         </div>
       )}
     </div>
