@@ -1,15 +1,33 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Função simples para extrair dados do texto transcrito (exemplo)
+// Função melhorada para extrair dados do texto transcrito
 function parseProposalData(text: string) {
-  // Exemplo: "faça uma proposta para a cidade Uberlândia com dados 10 20 30 40 50 e use o template Padrão"
-  const match = text.match(/cidade\s+([\wÀ-ÿ ]+)/i);
-  const cidade = match ? match[1].trim() : '';
-  const dados = text.match(/dados?\s+([\d\s]+)/i);
-  const numeros = dados ? dados[1].trim().split(/\s+/).map(Number) : [];
+  // Exemplo: "faça uma proposta para a cidade Uberlândia MG com os dados 10, 20, 30, 40, 50 e use o template padrão"
+  // Extrair cidade
+  let cidade = '';
+  let numeros: number[] = [];
+  let template = '';
+
+  // Extrai cidade entre "cidade" e "com os dados" ou "com dados"
+  const cidadeMatch = text.match(/cidade\s+(.+?)\s+com\s+os?\s+dados?/i);
+  if (cidadeMatch) {
+    cidade = cidadeMatch[1].trim();
+  }
+
+  // Extrai números entre "dados" e "e use o template"
+  const numerosMatch = text.match(/dados?\s+([\d\s,\.]+)(?:\s+e\s+use|\s+e\s*o\s*template|$)/i);
+  if (numerosMatch) {
+    // Pega todos os números separados por vírgula, espaço ou ponto
+    numeros = numerosMatch[1].split(/[\s,\.]+/).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+  }
+
+  // Extrai template após "template"
   const templateMatch = text.match(/template\s+([\wÀ-ÿ ]+)/i);
-  const template = templateMatch ? templateMatch[1].trim() : '';
+  if (templateMatch) {
+    template = templateMatch[1].trim();
+  }
+
   return {
     cidade,
     numeros,
