@@ -2,6 +2,25 @@
 
 Sistema completo para geração de propostas comerciais em PDF, desenvolvido com React, TypeScript e jsPDF. Permite criar, editar, visualizar e salvar propostas com template personalizável, incluindo logo da empresa e informações de contato.
 
+## 🚀 Novidades
+
+### Seleção de Template
+- **Seletor de template** na tela de Nova Proposta
+- **Template padrão** selecionado automaticamente
+- **Atualização automática** de preços e cálculos ao trocar template
+- **CRUD unificado** de templates na tela de Templates
+
+### Upload de Logo
+- **Upload para Cloudinary** integrado
+- **Logo salva no servidor** para uso em qualquer dispositivo
+- **Conversão automática** para base64 no PDF
+
+### Melhorias na Interface
+- **Mensagens na tela** em vez de modais
+- **Dados mantidos** após salvar proposta
+- **Lista responsiva** de propostas salvas
+- **Visualização em cards** para dispositivos móveis
+
 ## 🚀 Funcionalidades
 
 ### ✨ Principais Recursos
