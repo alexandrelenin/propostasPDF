@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Proposal, Template, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry, Cost } from '../types';
+import { Proposal, Template, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry, Cost, SavedProposalMeta } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, SUPPORT_SERVICE_DESCRIPTION_TEMPLATE } from '../constants';
 import { formatCurrency, formatDateForDisplay, getCurrentDateISO } from '../utils/formatters';
 // import { generatePdfFromElement } from '../services/pdfGenerator'; // Old way
 import { generateProposalPdf } from '../services/pdfGenerator'; // New programmatic way
 import { getAllCosts } from '../services/costService';
 import { saveProposal } from '../services/proposalService';
+import SavedProposalsView from './SavedProposalsView';
+import AudioUpload from './AudioUpload';
 
 interface ProposalViewProps {
   templateSettings: Template;
@@ -16,9 +18,12 @@ interface ProposalViewProps {
   existingProposal?: Proposal | null;
   onNavigateToSaved: () => void;
   onShowMessage: (message: string, type?: 'success' | 'error' | 'info') => void;
+  savedProposalsMeta: SavedProposalMeta[];
+  onViewProposal: (id: string) => void;
+  onDeleteProposal: (id: string) => void;
 }
 
-const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTemplates, onTemplateChange, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
+const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTemplates, onTemplateChange, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage, savedProposalsMeta, onViewProposal, onDeleteProposal }) => {
   const [activeTab, setActiveTab] = useState<'form' | 'preview' | 'finance'>('form');
   const [formData, setFormData] = useState<ProposalInputData>({
     clientName: '',
@@ -37,6 +42,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
   const [currentProposal, setCurrentProposal] = useState<Proposal | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [costs, setCosts] = useState<Cost[]>([]);
+  const [internalTab, setInternalTab] = useState<'atuais' | 'salvas' | 'audio'>('atuais');
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -582,42 +588,71 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
     <div className="flex flex-col h-[calc(100vh-theme(space.12))]">
       <div className="px-4 md:px-6 pt-3 border-b border-gray-200 bg-slate-50 no-print">
         <nav className="flex space-x-1 sm:space-x-4" aria-label="Tabs">
-          <button onClick={() => setActiveTab('form')} className={tabButtonClass('form')}>
-            Editar Dados
+          <button onClick={() => setInternalTab('atuais')} className={tabButtonClass('atuais')}>
+            Atuais
           </button>
-          <button onClick={() => setActiveTab('preview')} className={tabButtonClass('preview')}>
-            Visualizar Proposta (HTML)
+          <button onClick={() => setInternalTab('salvas')} className={tabButtonClass('salvas')}>
+            Salvas
           </button>
-          <button onClick={() => setActiveTab('finance')} className={tabButtonClass('finance')}>
-            Projeção Financeira
+          <button onClick={() => setInternalTab('audio')} className={tabButtonClass('audio')}>
+            Áudio
           </button>
         </nav>
       </div>
-
-      <div className={`flex-grow overflow-y-auto p-1 md:p-2 ${activeTab === 'preview' ? 'bg-slate-300' : 'bg-slate-100'}`}> 
-        {activeTab === 'form' && renderForm()}
-        {activeTab === 'preview' && renderProposalPreview()}
-        {activeTab === 'finance' && renderFinanceProjection()}
-      </div>
-      
-      <div className="p-3 bg-white border-t border-gray-200 shadow-md no-print">
-        <div className="flex flex-col sm:flex-row gap-2 justify-end">
-            <button type="button" onClick={handleSave} className="w-full sm:w-auto order-1 px-5 py-2 bg-sky-600 text-white font-semibold rounded-md shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition duration-150 text-sm">
-              {isEditing ? "Atualizar Proposta" : "Salvar Proposta"}
-            </button>
-            <button type="button" onClick={handleGeneratePdf} className="w-full sm:w-auto order-2 px-5 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 text-sm">
-              Gerar PDF (Programático)
-            </button>
-            {isEditing ? (
-                 <button type="button" onClick={() => { resetForm(); onNavigateToSaved(); }} className="w-full sm:w-auto order-last sm:order-3 px-5 py-2 bg-gray-500 text-white font-semibold rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 text-sm">
-                    Cancelar Edição
-                 </button>
-            ) : (
-                 <button type="button" onClick={resetForm} className="w-full sm:w-auto order-last sm:order-3 px-5 py-2 bg-amber-600 text-white font-semibold rounded-md shadow-sm hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition duration-150 text-sm">
-                    Limpar Formulário
-                 </button>
-            )}
-          </div>
+      <div className={`flex-grow overflow-y-auto p-1 md:p-2 bg-slate-100`}> 
+        {internalTab === 'atuais' && (
+          <>
+            {/* Navegação das sub-abas internas */}
+            <div className="flex space-x-1 mb-4">
+              <button
+                className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'form' ? 'bg-sky-600 text-white' : 'bg-slate-200 text-gray-700'}`}
+                onClick={() => setActiveTab('form')}
+              >
+                Editar Dados
+              </button>
+              <button
+                className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'preview' ? 'bg-sky-600 text-white' : 'bg-slate-200 text-gray-700'}`}
+                onClick={() => setActiveTab('preview')}
+              >
+                Visualizar Proposta
+              </button>
+              <button
+                className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === 'finance' ? 'bg-sky-600 text-white' : 'bg-slate-200 text-gray-700'}`}
+                onClick={() => setActiveTab('finance')}
+              >
+                Projeção Financeira
+              </button>
+            </div>
+            {activeTab === 'form' && renderForm()}
+            {activeTab === 'preview' && renderProposalPreview()}
+            {activeTab === 'finance' && renderFinanceProjection()}
+            <div className="flex flex-col sm:flex-row gap-2 justify-end mt-4">
+              <button type="button" onClick={handleSave} className="w-full sm:w-auto order-1 px-5 py-2 bg-sky-600 text-white font-semibold rounded-md shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition duration-150 text-sm">
+                {isEditing ? "Atualizar Proposta" : "Salvar Proposta"}
+              </button>
+              <button type="button" onClick={handleGeneratePdf} className="w-full sm:w-auto order-2 px-5 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 text-sm">
+                Gerar PDF (Programático)
+              </button>
+              {isEditing ? (
+                   <button type="button" onClick={() => { resetForm(); onNavigateToSaved(); }} className="w-full sm:w-auto order-last sm:order-3 px-5 py-2 bg-gray-500 text-white font-semibold rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 text-sm">
+                      Cancelar Edição
+                   </button>
+              ) : (
+                   <button type="button" onClick={resetForm} className="w-full sm:w-auto order-last sm:order-3 px-5 py-2 bg-amber-600 text-white font-semibold rounded-md shadow-sm hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition duration-150 text-sm">
+                      Limpar Formulário
+                   </button>
+              )}
+            </div>
+          </>
+        )}
+        {internalTab === 'salvas' && (
+          <SavedProposalsView 
+            proposalsMeta={savedProposalsMeta}
+            onViewProposal={onViewProposal}
+            onDeleteProposal={onDeleteProposal}
+          />
+        )}
+        {internalTab === 'audio' && <AudioUpload />}
       </div>
     </div>
   );

@@ -27,14 +27,12 @@ const Navbar: React.FC<NavbarProps> = ({ onCreateNewProposal }) => {
     <nav className="bg-sky-800 p-4 shadow-lg no-print">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" onClick={onCreateNewProposal} className="text-2xl font-bold text-white hover:text-sky-200 transition-colors">
-          Gerador de Propostas PDF
+          Propostas
         </Link>
-        <div className="space-x-3">
-          <Link to="/" onClick={onCreateNewProposal} className={linkClass('/')}>Nova Proposta</Link>
-          <Link to="/saved" className={linkClass('/saved')}>Propostas Salvas</Link>
+        <div className="space-x-3 flex flex-row md:flex-row items-center">
+          <Link to="/" onClick={onCreateNewProposal} className={linkClass('/')}>Propostas</Link>
           <Link to="/templates" className={linkClass('/templates')}>Templates</Link>
           <Link to="/costs" className={linkClass('/costs')}>Custos</Link>
-          <Link to="/audio-upload" className={linkClass('/audio-upload')}>Transcrição Áudio</Link>
         </div>
       </div>
     </nav>
@@ -236,6 +234,9 @@ const App: React.FC = () => {
                   navigate('/saved');
                 }}
                 onShowMessage={showSystemMessage}
+                savedProposalsMeta={savedProposalsMeta}
+                onViewProposal={handleViewProposal}
+                onDeleteProposal={handleDeleteProposal}
               />
             } 
           />
