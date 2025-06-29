@@ -10,13 +10,15 @@ import { saveProposal } from '../services/proposalService';
 
 interface ProposalViewProps {
   templateSettings: Template;
+  allTemplates: Template[];
+  onTemplateChange: (templateId: string) => Promise<void>;
   onSaveProposal: (proposal: Proposal) => void;
   existingProposal?: Proposal | null;
   onNavigateToSaved: () => void;
   onShowMessage: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
+const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTemplates, onTemplateChange, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
   const [activeTab, setActiveTab] = useState<'form' | 'preview' | 'finance'>('form');
   const [formData, setFormData] = useState<ProposalInputData>({
     clientName: '',
@@ -213,6 +215,30 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
   const renderForm = () => (
     <div className="lg:w-full bg-white p-4 sm:p-6 shadow-lg rounded-lg overflow-y-auto">
       <h2 className="text-2xl font-bold text-sky-700 mb-6">{isEditing ? "Editar Proposta" : "Criar Nova Proposta"}</h2>
+      
+      {/* Seletor de Template */}
+      <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+        <label htmlFor="templateSelect" className="block text-sm font-medium text-gray-700 mb-2">
+          Template da Proposta
+        </label>
+        <select
+          id="templateSelect"
+          value={templateSettings.id}
+          onChange={(e) => onTemplateChange(e.target.value)}
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+        >
+          {allTemplates.map((template) => (
+            <option key={template.id} value={template.id}>
+              {template.name} {template.isDefault ? '(Padrão)' : ''}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">
+          Template selecionado: <span className="font-medium">{templateSettings.name}</span>
+          {templateSettings.isDefault && <span className="text-sky-600 ml-1">(Padrão)</span>}
+        </p>
+      </div>
+      
       <form className="space-y-4">
         <div>
           <label htmlFor="clientName" className="block text-sm font-medium text-gray-700">Nome do Cliente (Ex: PORTO NACIONAL - TO)</label>

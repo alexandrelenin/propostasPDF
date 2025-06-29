@@ -6,7 +6,7 @@ import TemplatesView from './components/TemplatesView';
 import CostsCrudView from './components/CostsCrudView';
 import { Template, Proposal, SavedProposalMeta } from './types';
 import { INITIAL_TEMPLATE_SETTINGS } from './constants';
-import { saveTemplate, getTemplateById } from './services/templateService';
+import { saveTemplate, getTemplateById, getAllTemplates, getDefaultTemplate } from './services/templateService';
 import { saveProposal, getAllProposals, getProposalById, deleteProposal } from './services/proposalService';
 
 interface NavbarProps {
@@ -78,6 +78,7 @@ const App: React.FC = () => {
     isDefault: true,
   };
   const [templateSettings, setTemplateSettings] = useState<Template>(initialTemplate);
+  const [allTemplates, setAllTemplates] = useState<Template[]>([]);
   const [savedProposalsMeta, setSavedProposalsMeta] = useState<SavedProposalMeta[]>([]);
   const [editingProposal, setEditingProposal] = useState<Proposal | null | undefined>(undefined);
   const [systemMessage, setSystemMessage] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -86,7 +87,7 @@ const App: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    async function fetchProposalsAndTemplate() {
+    async function fetchProposalsAndTemplates() {
       const propostas = await getAllProposals();
       const meta = propostas.map(p => ({
         id: p.id,
@@ -96,9 +97,24 @@ const App: React.FC = () => {
         createdAt: p.createdAt,
       })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setSavedProposalsMeta(meta);
-      setTemplateSettings(initialTemplate);
+      
+      // Carregar todos os templates
+      const templates = await getAllTemplates();
+      setAllTemplates(templates);
+      
+      // Buscar template padrão
+      const defaultTemplate = await getDefaultTemplate();
+      if (defaultTemplate) {
+        setTemplateSettings(defaultTemplate);
+      } else if (templates.length > 0) {
+        // Se não há template padrão, usar o primeiro
+        setTemplateSettings(templates[0]);
+      } else {
+        // Se não há templates, usar o inicial
+        setTemplateSettings(initialTemplate);
+      }
     }
-    fetchProposalsAndTemplate();
+    fetchProposalsAndTemplates();
   }, []);
 
   // Effect to clear editingProposal if navigating to '/' directly
@@ -182,6 +198,14 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTemplateChange = async (templateId: string) => {
+    const selectedTemplate = allTemplates.find(t => t.id === templateId);
+    if (selectedTemplate) {
+      setTemplateSettings(selectedTemplate);
+      showSystemMessage(`Template "${selectedTemplate.name}" selecionado!`, "success");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-100">
       <Navbar onCreateNewProposal={handleCreateNewProposal} />
@@ -201,6 +225,8 @@ const App: React.FC = () => {
             element={
               <ProposalView 
                 templateSettings={templateSettings} 
+                allTemplates={allTemplates}
+                onTemplateChange={handleTemplateChange}
                 onSaveProposal={handleSaveProposal}
                 existingProposal={editingProposal}
                 onNavigateToSaved={() => {
