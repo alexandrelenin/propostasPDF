@@ -66,8 +66,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
         setFormData(prev => ({
           ...prev,
           clientName: parsed.cidade || '',
-          proposalLocation: parsed.cidade || '',
-          // Os números extraídos são mapeados para as quantidades dos itens na ordem
+          proposalLocation: '', // Usar o valor do template
           itemQuantities: {
             [ProposalItemCategory.ELECTRONIC_DEVICE]: parsed.numeros[0] || 0,
             [ProposalItemCategory.INSTALLATION_SERVICES]: parsed.numeros[1] || 0,

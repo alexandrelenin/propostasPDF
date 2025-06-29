@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 
 // Função melhorada para extrair dados do texto transcrito
 function parseProposalData(text: string) {
-  // Exemplo: "faça uma proposta para a cidade Uberlândia MG com os dados 10, 20, 30, 40, 50 e use o template padrão"
-  // Extrair cidade
   let cidade = '';
   let numeros: number[] = [];
   let template = '';
@@ -13,12 +11,22 @@ function parseProposalData(text: string) {
   const cidadeMatch = text.match(/cidade\s+(.+?)\s+com\s+os?\s+dados?/i);
   if (cidadeMatch) {
     cidade = cidadeMatch[1].trim();
+    // Remove "de " do início, se houver
+    cidade = cidade.replace(/^de\s+/i, '');
+    // Se não tiver " - ", tenta separar cidade e UF
+    if (!cidade.includes(' - ')) {
+      // Tenta pegar a última palavra como UF se for sigla
+      const partes = cidade.split(/\s+/);
+      if (partes.length > 1 && /^[A-Z]{2}$/i.test(partes[partes.length - 1])) {
+        const uf = partes.pop();
+        cidade = partes.join(' ') + ' - ' + uf?.toUpperCase();
+      }
+    }
   }
 
   // Extrai números entre "dados" e "e use o template"
   const numerosMatch = text.match(/dados?\s+([\d\s,\.]+)(?:\s+e\s+use|\s+e\s*o\s*template|$)/i);
   if (numerosMatch) {
-    // Pega todos os números separados por vírgula, espaço ou ponto
     numeros = numerosMatch[1].split(/[\s,\.]+/).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
   }
 
