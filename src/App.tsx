@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import ProposalView from './components/ProposalView';
-import TemplateEditorView from './components/TemplateEditorView';
 import SavedProposalsView from './components/SavedProposalsView';
 import TemplatesView from './components/TemplatesView';
 import CostsCrudView from './components/CostsCrudView';
-import { Template, TemplateSettings, Proposal, SavedProposalMeta } from './types';
+import { Template, Proposal, SavedProposalMeta } from './types';
 import { INITIAL_TEMPLATE_SETTINGS } from './constants';
 import { saveTemplate, getTemplateById } from './services/templateService';
 import { saveProposal, getAllProposals, getProposalById, deleteProposal } from './services/proposalService';
@@ -32,7 +31,6 @@ const Navbar: React.FC<NavbarProps> = ({ onCreateNewProposal }) => {
         <div className="space-x-3">
           <Link to="/" onClick={onCreateNewProposal} className={linkClass('/')}>Nova Proposta</Link>
           <Link to="/saved" className={linkClass('/saved')}>Propostas Salvas</Link>
-          <Link to="/template" className={linkClass('/template')}>Configurar Template</Link>
           <Link to="/templates" className={linkClass('/templates')}>Templates</Link>
           <Link to="/costs" className={linkClass('/costs')}>Custos</Link>
         </div>
@@ -127,7 +125,7 @@ const App: React.FC = () => {
     setSystemMessage(null);
   };
 
-  const handleSaveTemplate = async (settings: TemplateSettings) => {
+  const handleSaveTemplate = async (settings: Template) => {
     await saveTemplate(settings);
     // Buscar o template padrão atualizado (id: 'default')
     const updated = await getTemplateById('default');
@@ -220,15 +218,6 @@ const App: React.FC = () => {
                 proposalsMeta={savedProposalsMeta} 
                 onViewProposal={handleViewProposal}
                 onDeleteProposal={handleDeleteProposal}
-              />
-            } 
-          />
-          <Route 
-            path="/template" 
-            element={
-              <TemplateEditorView 
-                initialSettings={templateSettings} 
-                onSave={handleSaveTemplate} 
               />
             } 
           />

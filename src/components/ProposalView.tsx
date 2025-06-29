@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Proposal, TemplateSettings, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry, Cost } from '../types';
+import { Proposal, Template, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry, Cost } from '../types';
 import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, SUPPORT_SERVICE_DESCRIPTION_TEMPLATE } from '../constants';
 import { formatCurrency, formatDateForDisplay, getCurrentDateISO } from '../utils/formatters';
 // import { generatePdfFromElement } from '../services/pdfGenerator'; // Old way
 import { generateProposalPdf } from '../services/pdfGenerator'; // New programmatic way
 import { getAllCosts } from '../services/costService';
+import { saveProposal } from '../services/proposalService';
 
 interface ProposalViewProps {
-  templateSettings: TemplateSettings;
+  templateSettings: Template;
   onSaveProposal: (proposal: Proposal) => void;
   existingProposal?: Proposal | null;
   onNavigateToSaved: () => void;
-  onShowMessage: (msg: string, type: 'success' | 'error') => void;
+  onShowMessage: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSaveProposal, existingProposal, onNavigateToSaved, onShowMessage }) => {
@@ -122,6 +123,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, onSavePro
       supportMonthlyTotal: supportMonthlyTotal,
       supportAnnualTotal: supportAnnualTotal,
       createdAt: isEditing && existingProposal ? existingProposal.createdAt : new Date().toISOString(),
+      costVigencia: formData.costVigencia || '',
     };
     setCurrentProposal(newProposal);
 
