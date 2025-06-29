@@ -25,11 +25,15 @@ const Navbar: React.FC<NavbarProps> = ({ onCreateNewProposal }) => {
 
   return (
     <nav className="bg-sky-800 p-4 shadow-lg no-print">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" onClick={onCreateNewProposal} className="text-2xl font-bold text-white hover:text-sky-200 transition-colors">
-          Propostas
-        </Link>
-        <div className="space-x-3 flex flex-row md:flex-row items-center">
+      <div className="container mx-auto">
+        {/* Título na primeira linha */}
+        <div className="flex justify-center mb-3">
+          <Link to="/" onClick={onCreateNewProposal} className="text-2xl font-bold text-white hover:text-sky-200 transition-colors">
+            Propostas
+          </Link>
+        </div>
+        {/* Menu na segunda linha */}
+        <div className="flex justify-center space-x-3">
           <Link to="/" onClick={onCreateNewProposal} className={linkClass('/')}>Propostas</Link>
           <Link to="/templates" className={linkClass('/templates')}>Templates</Link>
           <Link to="/costs" className={linkClass('/costs')}>Custos</Link>
