@@ -51,6 +51,7 @@ export interface TemplateSettings {
   companyLogoUrl: string;
   introductoryText: string;
   contactInfo: ContactInfo;
+  cidadeUf: string; // Cidade/UF para local da proposta
   supportServiceEmail: string; // Used in dynamic support description
   defaultUnitPrices: {
     [ProposalItemCategory.ELECTRONIC_DEVICE]: number;

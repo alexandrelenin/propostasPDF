@@ -66,7 +66,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
         setFormData(prev => ({
           ...prev,
           clientName: parsed.cidade || '',
-          proposalLocation: '', // Usar o valor do template
+          proposalLocation: templateSettings.cidadeUf || '',
           itemQuantities: {
             [ProposalItemCategory.ELECTRONIC_DEVICE]: parsed.numeros[0] || 0,
             [ProposalItemCategory.INSTALLATION_SERVICES]: parsed.numeros[1] || 0,
@@ -97,7 +97,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
     } else {
       resetForm();
     }
-  }, [existingProposal, resetForm]);
+  }, [existingProposal, resetForm, templateSettings]);
 
   useEffect(() => {
     async function fetchCosts() {
