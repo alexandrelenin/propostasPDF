@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Template } from '../types';
-import { getAllTemplates, deleteTemplate, setDefaultTemplate, saveTemplate } from '../services/templateService';
+import { getAllTemplates, deleteTemplate, setDefaultTemplate, saveTemplate, getDefaultTemplate } from '../services/templateService';
 import { v4 as uuidv4 } from 'uuid';
 import TemplateEditorView from './TemplateEditorView';
 
@@ -61,8 +61,22 @@ const TemplatesView: React.FC = () => {
     setIsNew(false);
   };
 
-  const handleNew = () => {
-    setEditing(emptyTemplate());
+  const handleNew = async () => {
+    // Buscar o template padrão
+    const defaultTemplate = await getDefaultTemplate();
+    let base: Template;
+    if (defaultTemplate) {
+      // Clonar o template padrão, mas com novo id, nome vazio e não padrão
+      base = {
+        ...defaultTemplate,
+        id: uuidv4(),
+        name: '',
+        isDefault: false
+      };
+    } else {
+      base = emptyTemplate();
+    }
+    setEditing(base);
     setIsNew(true);
   };
 
@@ -104,7 +118,7 @@ const TemplatesView: React.FC = () => {
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-sky-700">Templates de Proposta</h1>
-        <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition" onClick={handleNew}>Novo Template</button>
+        <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition" onClick={() => handleNew()}>Novo Template</button>
       </div>
       
       {loading ? (
