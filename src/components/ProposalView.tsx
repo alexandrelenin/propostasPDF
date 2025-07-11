@@ -453,7 +453,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
                 </tbody>
                 <tfoot className="font-semibold bg-slate-100">
                   <tr>
-                    <td colSpan={6} className={`${rightAlignedTextColumn} font-bold ${tableFooterCellPadding}`}>Total Anual (Serviços de Suporte):</td>
+                    <td colSpan={6} className={`${rightAlignedTextColumn} font-bold ${tableFooterCellPadding}`}>Custeio da manutenção:</td>
                     <td className={`${rightAlignedTextColumn} font-bold ${tableFooterCellPadding}`}>{formatCurrency(supportAnnualTotal!)}</td>
                   </tr>
                 </tfoot>
@@ -589,7 +589,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       <div className="px-4 md:px-6 pt-3 border-b border-gray-200 bg-slate-50 no-print">
         <nav className="flex space-x-1 sm:space-x-4" aria-label="Tabs">
           <button onClick={() => setInternalTab('atuais')} className={tabButtonClass('atuais')}>
-            Atuais
+            Editando
           </button>
           <button onClick={() => setInternalTab('salvas')} className={tabButtonClass('salvas')}>
             Salvas
@@ -631,7 +631,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
                 {isEditing ? "Atualizar Proposta" : "Salvar Proposta"}
               </button>
               <button type="button" onClick={handleGeneratePdf} className="w-full sm:w-auto order-2 px-5 py-2 bg-green-600 text-white font-semibold rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 text-sm">
-                Gerar PDF (Programático)
+                Gerar PDF
               </button>
               {isEditing ? (
                    <button type="button" onClick={() => { resetForm(); onNavigateToSaved(); }} className="w-full sm:w-auto order-last sm:order-3 px-5 py-2 bg-gray-500 text-white font-semibold rounded-md shadow-sm hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition duration-150 text-sm">

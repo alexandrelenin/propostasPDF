@@ -251,7 +251,7 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
         <div className="mt-10 flex justify-end">
           <button 
             type="submit"
-            className="px-8 py-3 bg-sky-600 text-white font-semibold rounded-md shadow-md hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+            className="px-8 py-3 bg-sky-600 text-white font-semibold rounded-md shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition duration-150 text-sm"
           >
             Salvar Configurações do Template
           </button>

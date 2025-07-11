@@ -280,7 +280,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
         6: { halign: 'right', cellWidth: 'auto' }  // Valor Total Anual
       },
       foot: [
-        [{ content: 'Custeio segundo ano', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }, 
+        [{ content: 'Custeio da manutenção', colSpan: 5, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }, 
          { content: formatCurrency(proposal.supportAnnualTotal), colSpan: 2, styles: { halign: 'right', fontStyle: 'bold' as const, fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const } }]
       ],
       footStyles: {

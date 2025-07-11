@@ -19,6 +19,7 @@ const emptyTemplate = (): Template => ({
     SERVER_LICENSE: 0,
     SUPPORT_SERVICES: 0,
   },
+  cidadeUf: '',
 });
 
 const TemplatesView: React.FC = () => {
@@ -141,9 +142,9 @@ const TemplatesView: React.FC = () => {
                 <td className="py-2 px-4">{tpl.isDefault ? 'Sim' : 'Não'}</td>
                 <td className="py-2 px-4 space-x-2">
                   {!tpl.isDefault && (
-                    <button className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700" onClick={() => handleSetDefault(tpl.id)}>Definir como Padrão</button>
+                    <button className="bg-sky-600 text-white px-2 py-1 rounded hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition duration-150 text-sm" onClick={() => handleSetDefault(tpl.id)}>Definir como Padrão</button>
                   )}
-                  <button className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600" onClick={() => handleEdit(tpl)}>Editar</button>
+                  <button className="bg-amber-600 text-white px-2 py-1 rounded hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition duration-150 text-sm" onClick={() => handleEdit(tpl)}>Editar</button>
                   <button className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700" onClick={() => handleDelete(tpl.id)}>Excluir</button>
                 </td>
               </tr>
