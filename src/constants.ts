@@ -21,6 +21,7 @@ export const INITIAL_TEMPLATE_SETTINGS: TemplateSettings = {
     STUDENT_LICENSE: 29.90,
     SERVER_LICENSE: 41.00,
     SUPPORT_SERVICES: 790.00,
+    METAL_DETECTOR_DEVICE: 10000.00,
   },
 };
 
@@ -52,6 +53,13 @@ export const PROPOSAL_ITEM_DEFINITIONS: ProposalItemConfigEntry[] = [
     name: "Licença de aquisição perpétua de sistema informatizado, por servidor, para modulação e gerenciamento dos dados relativos à presença registrada nos dispositivos de autenticação da face, com acesso via web, aplicação mobile para registros, justificativas e consultas.",
     category: ProposalItemCategory.SERVER_LICENSE,
     defaultQuantityLabel: "Qtd. Licenças por Servidor"
+  },
+  {
+    id: 'metal_detector_device',
+    itemNumber: "5",
+    name: "Dispositivo eletrônico detector de metal, em formato pórtico, com 06 (seis) zonas de detecção e sistema web integrado.",
+    category: ProposalItemCategory.METAL_DETECTOR_DEVICE,
+    defaultQuantityLabel: "Qtd. Dispositivos Detectores de Metal"
   },
 ];
 

@@ -4,6 +4,7 @@ export enum ProposalItemCategory {
   STUDENT_LICENSE = 'STUDENT_LICENSE', // Licença de aquisição perpétua ... por aluno
   SERVER_LICENSE = 'SERVER_LICENSE', // Licença de aquisição perpétua ... por servidor
   SUPPORT_SERVICES = 'SUPPORT_SERVICES', // Serviços de Suporte
+  METAL_DETECTOR_DEVICE = 'METAL_DETECTOR_DEVICE', // Dispositivo eletrônico detector de metal
 }
 
 export interface ProposalItemConfigEntry {
@@ -38,6 +39,8 @@ export interface Proposal {
   supportAnnualTotal?: number;
   createdAt: string; // ISO date string
   costVigencia: string; // Vigência do custo vigente associado
+  includeMetalDetectorDevice: boolean;
+  metalDetectorDeviceQuantity: number;
 }
 
 export interface ContactInfo {
@@ -59,6 +62,7 @@ export interface TemplateSettings {
     [ProposalItemCategory.STUDENT_LICENSE]: number;
     [ProposalItemCategory.SERVER_LICENSE]: number;
     [ProposalItemCategory.SUPPORT_SERVICES]: number; // Monthly unit price for support per school
+    [ProposalItemCategory.METAL_DETECTOR_DEVICE]: number;
   };
 }
 
@@ -68,6 +72,7 @@ export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvest
     [ProposalItemCategory.INSTALLATION_SERVICES]: number;
     [ProposalItemCategory.STUDENT_LICENSE]: number;
     [ProposalItemCategory.SERVER_LICENSE]: number;
+    [ProposalItemCategory.METAL_DETECTOR_DEVICE]: number;
   };
   costVigencia?: string;
 };

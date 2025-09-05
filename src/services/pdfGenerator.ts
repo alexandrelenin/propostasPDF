@@ -181,8 +181,18 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       styles: { halign: 'center', fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const, fontStyle: 'bold' as const, lineWidth: 0.1, lineColor: [0, 0, 0] as const } }],
     ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unitário', 'Valor Total']
   ];
-  const mainItemsBody = proposal.items.map(item => [
-    item.itemNumber,
+  const orderedItems = [...proposal.items].sort((a, b) => {
+    const order = [
+      ProposalItemCategory.ELECTRONIC_DEVICE,
+      ProposalItemCategory.INSTALLATION_SERVICES,
+      ProposalItemCategory.METAL_DETECTOR_DEVICE,
+      ProposalItemCategory.STUDENT_LICENSE,
+      ProposalItemCategory.SERVER_LICENSE,
+    ];
+    return order.indexOf(a.category) - order.indexOf(b.category);
+  });
+  const mainItemsBody = orderedItems.filter(item => item.quantity > 0).map((item, index) => [
+    (index + 1).toString(),
     item.unitType,
     item.quantity.toString(),
     item.name,
@@ -249,7 +259,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
         styles: { halign: 'center', fillColor: [222, 226, 230] as const, textColor: [33, 37, 41] as const, fontStyle: 'bold' as const, lineWidth: 0.1, lineColor: [0, 0, 0] as const } }],
       ['Item', 'Unid.', 'Qtde.', 'Descrição', 'Valor Unit. Mensal', 'Valor Total Mensal', 'Valor Total Anual']
     ];
-    const supportItemNumber = (PROPOSAL_ITEM_DEFINITIONS.length + 1).toString();
+    const supportItemNumber = (orderedItems.filter(item => item.quantity > 0).length + 1).toString();
     const supportDesc = SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(proposal.supportNumSchools);
     const supportBody = [[
       supportItemNumber,

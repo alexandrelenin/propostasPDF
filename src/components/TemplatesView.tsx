@@ -18,6 +18,7 @@ const emptyTemplate = (): Template => ({
     STUDENT_LICENSE: 0,
     SERVER_LICENSE: 0,
     SUPPORT_SERVICES: 0,
+    METAL_DETECTOR_DEVICE: 0,
   },
   cidadeUf: '',
 });

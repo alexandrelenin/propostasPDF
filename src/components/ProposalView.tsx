@@ -34,9 +34,12 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       [ProposalItemCategory.INSTALLATION_SERVICES]: 0,
       [ProposalItemCategory.STUDENT_LICENSE]: 0,
       [ProposalItemCategory.SERVER_LICENSE]: 0,
+      [ProposalItemCategory.METAL_DETECTOR_DEVICE]: 0,
     },
     includeSupportServices: true,
     supportNumSchools: 0, 
+    includeMetalDetectorDevice: false,
+    metalDetectorDeviceQuantity: 0,
   });
 
   const [currentProposal, setCurrentProposal] = useState<Proposal | null>(null);
@@ -54,9 +57,12 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
         [ProposalItemCategory.INSTALLATION_SERVICES]: 0,
         [ProposalItemCategory.STUDENT_LICENSE]: 0,
         [ProposalItemCategory.SERVER_LICENSE]: 0,
+        [ProposalItemCategory.METAL_DETECTOR_DEVICE]: 0,
       },
       includeSupportServices: true,
       supportNumSchools: 0,
+      includeMetalDetectorDevice: false,
+      metalDetectorDeviceQuantity: 0,
     });
     setCurrentProposal(null);
     setIsEditing(false);
@@ -94,9 +100,12 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
           [ProposalItemCategory.INSTALLATION_SERVICES]: existingProposal.items.find(item => item.category === ProposalItemCategory.INSTALLATION_SERVICES)?.quantity || 0,
           [ProposalItemCategory.STUDENT_LICENSE]: existingProposal.items.find(item => item.category === ProposalItemCategory.STUDENT_LICENSE)?.quantity || 0,
           [ProposalItemCategory.SERVER_LICENSE]: existingProposal.items.find(item => item.category === ProposalItemCategory.SERVER_LICENSE)?.quantity || 0,
+          [ProposalItemCategory.METAL_DETECTOR_DEVICE]: existingProposal.items.find(item => item.category === ProposalItemCategory.METAL_DETECTOR_DEVICE)?.quantity || 0,
         },
         includeSupportServices: existingProposal.includeSupportServices,
         supportNumSchools: existingProposal.supportNumSchools,
+        includeMetalDetectorDevice: existingProposal.includeMetalDetectorDevice,
+        metalDetectorDeviceQuantity: existingProposal.metalDetectorDeviceQuantity,
       });
       setIsEditing(true);
       setActiveTab('form'); 
@@ -115,7 +124,10 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
 
   const calculateProposal = useCallback(() => {
     const items: ProposalItem[] = PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: ProposalItemConfigEntry) => {
-      const quantity = formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0;
+      let quantity = formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0;
+      if (itemConfig.category === ProposalItemCategory.METAL_DETECTOR_DEVICE) {
+        quantity = formData.includeMetalDetectorDevice ? formData.metalDetectorDeviceQuantity : 0;
+      }
       const unitPrice = templateSettings.defaultUnitPrices[itemConfig.category as ProposalItemCategory];
       return {
         id: itemConfig.id,
@@ -152,6 +164,8 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       supportAnnualTotal: supportAnnualTotal,
       createdAt: isEditing && existingProposal ? existingProposal.createdAt : new Date().toISOString(),
       costVigencia: formData.costVigencia || '',
+      includeMetalDetectorDevice: formData.includeMetalDetectorDevice,
+      metalDetectorDeviceQuantity: formData.metalDetectorDeviceQuantity,
     };
     setCurrentProposal(newProposal);
 
@@ -206,7 +220,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       return;
     }
     const custosVigentes = costs.filter(c => c.vigenciaInicio === vigente.vigenciaInicio && c.id.endsWith(`-${vigente.vigenciaInicio}`));
-    if (custosVigentes.length !== 5) {
+    if (custosVigentes.length !== 6) {
       onShowMessage("Não foi possível encontrar todos os custos da vigência associada.", "error");
       return;
     }
@@ -287,7 +301,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
         </div>
 
         <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Itens da Proposta (Equipamentos, Instalações e Licenças)</h3>
-        {PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: ProposalItemConfigEntry) => (
+        {PROPOSAL_ITEM_DEFINITIONS.filter(item => item.category !== ProposalItemCategory.METAL_DETECTOR_DEVICE).map((itemConfig: ProposalItemConfigEntry) => (
           <div key={itemConfig.id}>
             <label htmlFor={`itemQuantities.${itemConfig.category}`} className="block text-sm font-medium text-gray-700">
               {`Qtde. - ${itemConfig.defaultQuantityLabel}`}
@@ -304,6 +318,22 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
             />
           </div>
         ))}
+
+        <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Dispositivo Eletrônico Detector de Metal</h3>
+        <div className="flex items-center">
+          <input type="checkbox" name="includeMetalDetectorDevice" id="includeMetalDetectorDevice" checked={formData.includeMetalDetectorDevice} onChange={handleInputChange}
+                  className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500" />
+          <label htmlFor="includeMetalDetectorDevice" className="ml-2 block text-sm text-gray-900">Incluir Dispositivo Eletrônico Detector de Metal</label>
+        </div>
+        {formData.includeMetalDetectorDevice && (
+            <div>
+            <label htmlFor="metalDetectorDeviceQuantity" className="block text-sm font-medium text-gray-700">Qtd. Dispositivos Detectores de Metal</label>
+            <p className="text-xs text-gray-500 mb-1">Dispositivo eletrônico detector de metal, em formato pórtico, com 06 (seis) zonas de detecção e sistema web integrado.</p>
+            <input type="number" name="metalDetectorDeviceQuantity" id="metalDetectorDeviceQuantity" value={formData.metalDetectorDeviceQuantity} min="0"
+                    onChange={(e) => setFormData(prev => ({...prev, metalDetectorDeviceQuantity: parseInt(e.target.value, 10) || 0}))}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm" />
+            </div>
+        )}
 
         <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Serviços de Suporte</h3>
          <div className="flex items-center">
@@ -328,6 +358,17 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
 
     const { clientName, proposalLocation, proposalDate, items, includeSupportServices, supportNumSchools, supportMonthlyTotal, supportAnnualTotal, firstYearInvestment } = currentProposal;
     const { companyLogoUrl, introductoryText, contactInfo } = templateSettings;
+
+    const orderedItems = [...items].sort((a, b) => {
+      const order = [
+        ProposalItemCategory.ELECTRONIC_DEVICE,
+        ProposalItemCategory.INSTALLATION_SERVICES,
+        ProposalItemCategory.METAL_DETECTOR_DEVICE,
+        ProposalItemCategory.STUDENT_LICENSE,
+        ProposalItemCategory.SERVER_LICENSE,
+      ];
+      return order.indexOf(a.category) - order.indexOf(b.category);
+    });
     
     const cellBasePadding = "px-1"; // Base horizontal padding
     const descriptionCellPadding = `${cellBasePadding} py-1.5`; // Increased vertical padding for descriptions
@@ -403,9 +444,9 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
                 </tr>
               </thead>
               <tbody>
-                {items.map((item: ProposalItem) => (
+                {orderedItems.filter(item => item.quantity > 0).map((item: ProposalItem, index: number) => (
                   <tr key={item.id} className="bg-white even:bg-slate-50">
-                    <td className={centeredNumericColumn}>{item.itemNumber}</td>
+                    <td className={centeredNumericColumn}>{index + 1}</td>
                     <td className={centeredNumericColumn}>{item.unitType}</td>
                     <td className={centeredNumericColumn}>{item.quantity}</td>
                     <td className={leftAlignedTextColumn}>{item.name}</td>
@@ -442,7 +483,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
                 </thead>
                 <tbody>
                   <tr className="bg-white">
-                    <td className={centeredNumericColumn}>5</td>
+                    <td className={centeredNumericColumn}>{orderedItems.filter(item => item.quantity > 0).length + 1}</td>
                     <td className={centeredNumericColumn}>UN</td>
                     <td className={centeredNumericColumn}>{supportNumSchools}</td>
                     <td className={leftAlignedTextColumn}>{SUPPORT_SERVICE_DESCRIPTION_TEMPLATE(supportNumSchools)}</td>
@@ -490,7 +531,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       return <div className="p-6 text-red-600">Não há custo vigente cadastrado para a data da proposta.</div>;
     }
     const custosVigentes = costs.filter(c => c.vigenciaInicio === vigente.vigenciaInicio && c.id.endsWith(`-${vigente.vigenciaInicio}`));
-    if (custosVigentes.length !== 5) {
+    if (custosVigentes.length !== 6) {
       return <div className="p-6 text-red-600">Não foi possível encontrar todos os custos da vigência associada.</div>;
     }
     // Mapear itens da proposta para custos
@@ -500,6 +541,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       { id: '3', label: 'Software gestão escolar', categoria: 'STUDENT_LICENSE' },
       { id: '4', label: 'Software ponto e modulação', categoria: 'SERVER_LICENSE' },
       { id: '5', label: 'Suporte', categoria: 'SUPPORT_SERVICES' },
+      { id: '6', label: 'Detector de Metal', categoria: 'METAL_DETECTOR_DEVICE' },
     ];
     const getItemQuantity = (cat: string) => {
       if (cat === 'SUPPORT_SERVICES') return formData.supportNumSchools;

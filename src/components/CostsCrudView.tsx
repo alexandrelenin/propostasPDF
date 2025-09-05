@@ -28,6 +28,11 @@ const FIXED_ITEMS = [
     descricao: 'Suporte',
     formaCobranca: 'mensal por escola',
   },
+  {
+    id: '6',
+    descricao: 'Dispositivo Eletrônico Detector de Metal',
+    formaCobranca: 'unidade',
+  },
 ];
 
 const getSuggestedVenda = (valorCompra: number, percent: number) => {
