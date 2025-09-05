@@ -1,0 +1,5 @@
+Teste.txt
+Teste da evolução 001 - primeiro Teste
+
+1. existem 2 campos para Qtde. - Qtd. Dispositivos Detectores de Metal
+um aparece logo abaixo

@@ -1,0 +1,18 @@
+Evolução-001: adicionar um novo item na proposta (será mostrado em uma linha da tabela da proposta) 
+
+Em "editar Proposta" incluir um item novo em "Itens da Proposta (Equipamentos, Instalações e Licenças)"
+- incluir um novo item> Dispositivo eletrônico detector de metal
+- coletar a quantidade deste item (QTD), como é feito nos demais.
+- texto resumo abaixo do Label: "Dispositivo eletrônico detector de metal, em formato pórtico, com 06 (seis) zonas de detecção e sistema web integrado.
+- incluir o checkbox "incluir dispositivo eletrônico detector de metal"
+- se o checkbox estiver ativo, este item será incluído na geração da proposta e visualização do template
+
+Aba Visualizar Propostas
+- o item "Dispositivo eletrônico detector de metal" deve aparecer na tabela "Equipamentos, Instalações e Licenças"  entre o item "Projetos de Instalação" e " Licenças por Aluno", caso esteja ativado no template em uso
+ 
+Aba Projeção Financeira
+- incluir o item "Dispositivo eletrônico detector de metal" na tabela de projeção financeira, coletar os dados e realizar os calculos
+
+NO menu Templates
+em Novo Template ou Editar Template, incluir o novo item "Dispositivo eletrônico detector de metal", ou seja, 
+coletar o Preço unitário deste item
