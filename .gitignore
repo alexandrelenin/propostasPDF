@@ -13,3 +13,6 @@ node_modules
 
  # Arquivos de ambiente local (se você criar um .env para testes futuros, NUNCA envie chaves de API nele)
  # .env
+
+# Build directory
+dist/
