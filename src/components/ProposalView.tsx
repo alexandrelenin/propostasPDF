@@ -357,7 +357,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
     if (!currentProposal) return <div className="text-center p-8 text-gray-500">Preencha os dados na aba "Editar Dados" para visualizar a proposta.</div>;
 
     const { clientName, proposalLocation, proposalDate, items, includeSupportServices, supportNumSchools, supportMonthlyTotal, supportAnnualTotal, firstYearInvestment } = currentProposal;
-    const { companyLogoUrl, introductoryText, contactInfo } = templateSettings;
+    const { companyLogoUrl, titleText, introductoryText, contactInfo } = templateSettings;
 
     const orderedItems = [...items].sort((a, b) => {
       const order = [
@@ -421,7 +421,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
                 />
               )}
             </div>
-            <h1 className="text-sm font-bold uppercase text-center mt-6 mb-6">SECRETARIA MUNICIPAL DE EDUCAÇÃO {clientName}</h1>
+            <h1 className="text-sm font-bold uppercase text-center mt-6 mb-6">{titleText} {clientName}</h1>
           </header>
 
           <section className="mb-3">

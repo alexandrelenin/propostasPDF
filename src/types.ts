@@ -52,6 +52,7 @@ export interface ContactInfo {
 
 export interface TemplateSettings {
   companyLogoUrl: string;
+  titleText: string; // Texto do título (ex: "SECRETARIA MUNICIPAL DE EDUCAÇÃO DE")
   introductoryText: string;
   contactInfo: ContactInfo;
   cidadeUf: string; // Cidade/UF para local da proposta

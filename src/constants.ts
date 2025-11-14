@@ -11,10 +11,11 @@ export const INITIAL_CONTACT_INFO: ContactInfo = {
 const placeholderLogoSvg = `data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 150 50'%3e%3crect width='150' height='50' fill='%23cccccc'/%3e%3ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='12px' fill='%23333333'%3eLogo Empresa%3c/text%3e%3c/svg%3e`;
 
 export const INITIAL_TEMPLATE_SETTINGS: TemplateSettings = {
-  companyLogoUrl: placeholderLogoSvg, 
+  companyLogoUrl: placeholderLogoSvg,
+  titleText: "SECRETARIA MUNICIPAL DE EDUCAÇÃO DE",
   introductoryText: "Estudos preliminares para fornecimento, instalação e manutenção preventiva e corretiva por 12 meses de plataforma integrada de suporte operacional composta de módulos de gestão integrada de unidades educacionais, órgãos e entidades da administração direta e indireta, visando a implementação de políticas públicas voltadas à erradicação da evasão e inassiduidade, incremento da eficácia dos planejamentos e aumento da segurança das unidades educacionais, órgãos e entidades, composto por equipamentos, softwares e serviços.",
   contactInfo: INITIAL_CONTACT_INFO,
-  supportServiceEmail: "suporte@smarttechschoolmg.com.br", 
+  supportServiceEmail: "suporte@smarttechschoolmg.com.br",
   defaultUnitPrices: {
     ELECTRONIC_DEVICE: 7500.00,
     INSTALLATION_SERVICES: 1600.00,
