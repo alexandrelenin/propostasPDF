@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Template } from '../types';
-import { getAllTemplates, deleteTemplate, setDefaultTemplate, saveTemplate, getDefaultTemplate } from '../services/templateService';
+import { getAllTemplates, deleteTemplate, setDefaultTemplate, saveTemplate, getDefaultTemplate, duplicateTemplate } from '../services/templateService';
 import { v4 as uuidv4 } from 'uuid';
 import TemplateEditorView from './TemplateEditorView';
 
@@ -82,6 +82,15 @@ const TemplatesView: React.FC = () => {
     setIsNew(true);
   };
 
+  const handleDuplicate = async (id: string) => {
+    try {
+      await duplicateTemplate(id);
+      fetchTemplates();
+    } catch (e) {
+      setError('Erro ao duplicar template.');
+    }
+  };
+
   const handleSave = async (template: Template) => {
     await saveTemplate(template);
     setEditing(null);
@@ -146,6 +155,7 @@ const TemplatesView: React.FC = () => {
                     <button className="bg-sky-600 text-white px-2 py-1 rounded hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 transition duration-150 text-sm" onClick={() => handleSetDefault(tpl.id)}>Definir como Padrão</button>
                   )}
                   <button className="bg-amber-600 text-white px-2 py-1 rounded hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 transition duration-150 text-sm" onClick={() => handleEdit(tpl)}>Editar</button>
+                  <button className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 text-sm" onClick={() => handleDuplicate(tpl.id)}>Duplicar</button>
                   <button className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700" onClick={() => handleDelete(tpl.id)}>Excluir</button>
                 </td>
               </tr>
