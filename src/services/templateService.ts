@@ -1,6 +1,7 @@
 import { db } from "./firebase";
 import { collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, writeBatch, query, where } from "firebase/firestore";
 import { Template } from "../types";
+import { v4 as uuidv4 } from "uuid";
 
 const templatesCollection = collection(db, "templates");
 
@@ -46,4 +47,22 @@ export async function getDefaultTemplate(): Promise<Template | null> {
     return querySnapshot.docs[0].data() as Template;
   }
   return null;
+}
+
+// Duplicar template
+export async function duplicateTemplate(id: string): Promise<Template> {
+  const originalTemplate = await getTemplateById(id);
+  if (!originalTemplate) {
+    throw new Error("Template não encontrado");
+  }
+
+  const duplicatedTemplate: Template = {
+    ...originalTemplate,
+    id: uuidv4(),
+    name: `${originalTemplate.name} - Cópia`,
+    isDefault: false
+  };
+
+  await saveTemplate(duplicatedTemplate);
+  return duplicatedTemplate;
 } 
