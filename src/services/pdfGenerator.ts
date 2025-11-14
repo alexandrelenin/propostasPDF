@@ -152,7 +152,8 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   // 2. Header Title (New Style)
   doc.setFontSize(11);
   doc.setFont('Helvetica', 'bold');
-  const titleText = `${settings.titleText} ${proposal.clientName.toUpperCase()}`;
+  const titlePrefix = settings.titleText || "SECRETARIA MUNICIPAL DE EDUCAÇÃO DE";
+  const titleText = `${titlePrefix} ${proposal.clientName.toUpperCase()}`;
   const titleWidth = doc.getTextWidth(titleText);
   const titleRectHeight = 10; // Height of the background rectangle
   const titleRectY = currentY - 5; // Adjust Y to center text vertically in rectangle

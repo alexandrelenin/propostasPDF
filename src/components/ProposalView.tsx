@@ -421,7 +421,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
                 />
               )}
             </div>
-            <h1 className="text-sm font-bold uppercase text-center mt-6 mb-6">{titleText} {clientName}</h1>
+            <h1 className="text-sm font-bold uppercase text-center mt-6 mb-6">{titleText || "SECRETARIA MUNICIPAL DE EDUCAÇÃO DE"} {clientName}</h1>
           </header>
 
           <section className="mb-3">
