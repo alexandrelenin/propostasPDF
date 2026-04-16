@@ -182,6 +182,31 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
           </p>
         </div>
 
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Template</label>
+          <select
+            value={settings.templateType || 'standard'}
+            onChange={e => handleFieldChange('templateType', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+          >
+            <option value="standard">Padrão</option>
+            <option value="rfid">RFID</option>
+          </select>
+        </div>
+
+        {(settings.templateType === 'rfid') && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título da Tabela Principal</label>
+            <input
+              type="text"
+              value={settings.mainTableTitle || ''}
+              onChange={e => handleFieldChange('mainTableTitle', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+              placeholder="Ex: Cartão de Proximidade RFID"
+            />
+          </div>
+        )}
+
         <div>
           <h2 className="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Informações Gerais</h2>
           
