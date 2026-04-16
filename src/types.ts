@@ -5,6 +5,7 @@ export enum ProposalItemCategory {
   SERVER_LICENSE = 'SERVER_LICENSE', // Licença de aquisição perpétua ... por servidor
   SUPPORT_SERVICES = 'SUPPORT_SERVICES', // Serviços de Suporte
   METAL_DETECTOR_DEVICE = 'METAL_DETECTOR_DEVICE', // Dispositivo eletrônico detector de metal
+  RFID_CARD = 'RFID_CARD', // Cartão de proximidade RFID
 }
 
 export interface ProposalItemConfigEntry {
@@ -64,7 +65,10 @@ export interface TemplateSettings {
     [ProposalItemCategory.SERVER_LICENSE]: number;
     [ProposalItemCategory.SUPPORT_SERVICES]: number; // Monthly unit price for support per school
     [ProposalItemCategory.METAL_DETECTOR_DEVICE]: number;
+    [ProposalItemCategory.RFID_CARD]: number;
   };
+  templateType?: 'standard' | 'rfid';
+  mainTableTitle?: string;
 }
 
 export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvestment' | 'supportMonthlyTotal' | 'supportAnnualTotal' | 'createdAt' | 'costVigencia'> & {
@@ -74,6 +78,7 @@ export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvest
     [ProposalItemCategory.STUDENT_LICENSE]: number;
     [ProposalItemCategory.SERVER_LICENSE]: number;
     [ProposalItemCategory.METAL_DETECTOR_DEVICE]: number;
+    [ProposalItemCategory.RFID_CARD]: number;
   };
   costVigencia?: string;
 };
