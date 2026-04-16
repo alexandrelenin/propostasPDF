@@ -23,7 +23,10 @@ export const INITIAL_TEMPLATE_SETTINGS: TemplateSettings = {
     SERVER_LICENSE: 41.00,
     SUPPORT_SERVICES: 790.00,
     METAL_DETECTOR_DEVICE: 10000.00,
+    RFID_CARD: 0,
   },
+  templateType: 'standard' as const,
+  mainTableTitle: 'Equipamentos, Instalações e Licenças',
 };
 
 export const PROPOSAL_ITEM_DEFINITIONS: ProposalItemConfigEntry[] = [
@@ -61,6 +64,13 @@ export const PROPOSAL_ITEM_DEFINITIONS: ProposalItemConfigEntry[] = [
     name: "Dispositivo eletrônico detector de metal, em formato pórtico, com 06 (seis) zonas de detecção e sistema web integrado.",
     category: ProposalItemCategory.METAL_DETECTOR_DEVICE,
     defaultQuantityLabel: "Qtd. Dispositivos Detectores de Metal"
+  },
+  {
+    id: 'rfid_card',
+    itemNumber: "1",
+    name: "Cartão de proximidade utilizado para identificação rápida e segura de usuários, com tecnologia RFID.",
+    category: ProposalItemCategory.RFID_CARD,
+    defaultQuantityLabel: "Qtd. Cartões RFID"
   },
 ];
 
