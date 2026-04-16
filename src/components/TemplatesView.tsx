@@ -93,6 +93,9 @@ const TemplatesView: React.FC = () => {
 
   const handleSave = async (template: Template) => {
     await saveTemplate(template);
+    if (template.isDefault) {
+      await setDefaultTemplate(template.id);
+    }
     setEditing(null);
     setIsNew(false);
     fetchTemplates();

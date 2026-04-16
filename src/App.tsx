@@ -101,11 +101,11 @@ const App: React.FC = () => {
         createdAt: p.createdAt,
       })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setSavedProposalsMeta(meta);
-      
+
       // Carregar todos os templates
       const templates = await getAllTemplates();
       setAllTemplates(templates);
-      
+
       // Buscar template padrão
       const defaultTemplate = await getDefaultTemplate();
       if (defaultTemplate) {
@@ -119,7 +119,7 @@ const App: React.FC = () => {
       }
     }
     fetchProposalsAndTemplates();
-  }, []);
+  }, [location.pathname]);
 
   // Effect to clear editingProposal if navigating to '/' directly
   // and the intention is not to continue editing (e.g. browser back button to / from an edit state)
