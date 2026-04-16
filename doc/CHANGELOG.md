@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-04-15 — Fix: Template padrão duplicado e não atualizava
+
+**Commit:** `c665126` (main)
+
+### Problema
+
+Dois templates apareciam como "Padrão" simultaneamente, e ao definir um novo padrão na tela de Templates e voltar para Propostas, o template ativo não mudava.
+
+### Causa raiz
+
+- `TemplatesView.handleSave` salvava o template com `isDefault: true` diretamente, sem limpar o flag nos demais templates.
+- `App.tsx` carregava templates uma única vez no mount (`useEffect` com `[]`), então mudanças feitas na tela de Templates nunca refletiam na tela de Propostas.
+
+### Correção
+
+| Arquivo | Mudança |
+|---|---|
+| `src/components/TemplatesView.tsx` | `handleSave` chama `setDefaultTemplate(id)` quando `isDefault: true`, limpando o flag via batch no Firestore |
+| `src/App.tsx` | `useEffect` passa a depender de `location.pathname`, re-buscando templates e padrão a cada navegação |
+
+---
+
 ## 2026-04-15 — Template RFID: Cartão de Proximidade
 
 **Plano:** `clever-dazzling-clover.md`
