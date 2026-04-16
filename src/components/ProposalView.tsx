@@ -35,9 +35,10 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       [ProposalItemCategory.STUDENT_LICENSE]: 0,
       [ProposalItemCategory.SERVER_LICENSE]: 0,
       [ProposalItemCategory.METAL_DETECTOR_DEVICE]: 0,
+      [ProposalItemCategory.RFID_CARD]: 0,
     },
     includeSupportServices: true,
-    supportNumSchools: 0, 
+    supportNumSchools: 0,
     includeMetalDetectorDevice: false,
     metalDetectorDeviceQuantity: 0,
   });
@@ -58,6 +59,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
         [ProposalItemCategory.STUDENT_LICENSE]: 0,
         [ProposalItemCategory.SERVER_LICENSE]: 0,
         [ProposalItemCategory.METAL_DETECTOR_DEVICE]: 0,
+        [ProposalItemCategory.RFID_CARD]: 0,
       },
       includeSupportServices: true,
       supportNumSchools: 0,
@@ -101,6 +103,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
           [ProposalItemCategory.STUDENT_LICENSE]: existingProposal.items.find(item => item.category === ProposalItemCategory.STUDENT_LICENSE)?.quantity || 0,
           [ProposalItemCategory.SERVER_LICENSE]: existingProposal.items.find(item => item.category === ProposalItemCategory.SERVER_LICENSE)?.quantity || 0,
           [ProposalItemCategory.METAL_DETECTOR_DEVICE]: existingProposal.items.find(item => item.category === ProposalItemCategory.METAL_DETECTOR_DEVICE)?.quantity || 0,
+          [ProposalItemCategory.RFID_CARD]: existingProposal.items.find(item => item.category === ProposalItemCategory.RFID_CARD)?.quantity || 0,
         },
         includeSupportServices: existingProposal.includeSupportServices,
         supportNumSchools: existingProposal.supportNumSchools,
@@ -211,6 +214,11 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       setActiveTab('form');
       return;
     }
+    // Para template RFID, salvar sem validação de custo vigente
+    if (templateSettings.templateType === 'rfid') {
+      onSaveProposal({ ...currentProposal, costVigencia: '' });
+      return;
+    }
     // Buscar vigência de custo vigente para a data da proposta
     const vigente = costs
       .filter(c => c.vigenciaInicio <= currentProposal.proposalDate)
@@ -300,55 +308,80 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
           </div>
         </div>
 
-        <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Itens da Proposta (Equipamentos, Instalações e Licenças)</h3>
-        {PROPOSAL_ITEM_DEFINITIONS.filter(item => item.category !== ProposalItemCategory.METAL_DETECTOR_DEVICE).map((itemConfig: ProposalItemConfigEntry) => (
-          <div key={itemConfig.id}>
-            <label htmlFor={`itemQuantities.${itemConfig.category}`} className="block text-sm font-medium text-gray-700">
-              {`Qtde. - ${itemConfig.defaultQuantityLabel}`}
-            </label>
-            <p className="text-xs text-gray-500 mb-1">{itemConfig.name}</p>
-            <input
-              type="number"
-              name={`itemQuantities.${itemConfig.category}`}
-              id={`itemQuantities.${itemConfig.category}`}
-              value={formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0}
-              min="0"
-              onChange={handleInputChange}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
-            />
-          </div>
-        ))}
+        {templateSettings.templateType === 'rfid' ? (
+          <>
+            <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Cartão de Proximidade RFID</h3>
+            {PROPOSAL_ITEM_DEFINITIONS.filter(item => item.category === ProposalItemCategory.RFID_CARD).map((itemConfig: ProposalItemConfigEntry) => (
+              <div key={itemConfig.id}>
+                <label htmlFor={`itemQuantities.${itemConfig.category}`} className="block text-sm font-medium text-gray-700">
+                  {`Qtde. - ${itemConfig.defaultQuantityLabel}`}
+                </label>
+                <p className="text-xs text-gray-500 mb-1">{itemConfig.name}</p>
+                <input
+                  type="number"
+                  name={`itemQuantities.${itemConfig.category}`}
+                  id={`itemQuantities.${itemConfig.category}`}
+                  value={formData.itemQuantities[ProposalItemCategory.RFID_CARD] || 0}
+                  min="0"
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                />
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Itens da Proposta (Equipamentos, Instalações e Licenças)</h3>
+            {PROPOSAL_ITEM_DEFINITIONS.filter(item => item.category !== ProposalItemCategory.METAL_DETECTOR_DEVICE && item.category !== ProposalItemCategory.RFID_CARD).map((itemConfig: ProposalItemConfigEntry) => (
+              <div key={itemConfig.id}>
+                <label htmlFor={`itemQuantities.${itemConfig.category}`} className="block text-sm font-medium text-gray-700">
+                  {`Qtde. - ${itemConfig.defaultQuantityLabel}`}
+                </label>
+                <p className="text-xs text-gray-500 mb-1">{itemConfig.name}</p>
+                <input
+                  type="number"
+                  name={`itemQuantities.${itemConfig.category}`}
+                  id={`itemQuantities.${itemConfig.category}`}
+                  value={formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0}
+                  min="0"
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+                />
+              </div>
+            ))}
 
-        <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Dispositivo Eletrônico Detector de Metal</h3>
-        <div className="flex items-center">
-          <input type="checkbox" name="includeMetalDetectorDevice" id="includeMetalDetectorDevice" checked={formData.includeMetalDetectorDevice} onChange={handleInputChange}
-                  className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500" />
-          <label htmlFor="includeMetalDetectorDevice" className="ml-2 block text-sm text-gray-900">Incluir Dispositivo Eletrônico Detector de Metal</label>
-        </div>
-        {formData.includeMetalDetectorDevice && (
-            <div>
-            <label htmlFor="metalDetectorDeviceQuantity" className="block text-sm font-medium text-gray-700">Qtd. Dispositivos Detectores de Metal</label>
-            <p className="text-xs text-gray-500 mb-1">Dispositivo eletrônico detector de metal, em formato pórtico, com 06 (seis) zonas de detecção e sistema web integrado.</p>
-            <input type="number" name="metalDetectorDeviceQuantity" id="metalDetectorDeviceQuantity" value={formData.metalDetectorDeviceQuantity} min="0"
-                    onChange={(e) => setFormData(prev => ({...prev, metalDetectorDeviceQuantity: parseInt(e.target.value, 10) || 0}))}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm" />
+            <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Dispositivo Eletrônico Detector de Metal</h3>
+            <div className="flex items-center">
+              <input type="checkbox" name="includeMetalDetectorDevice" id="includeMetalDetectorDevice" checked={formData.includeMetalDetectorDevice} onChange={handleInputChange}
+                      className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500" />
+              <label htmlFor="includeMetalDetectorDevice" className="ml-2 block text-sm text-gray-900">Incluir Dispositivo Eletrônico Detector de Metal</label>
             </div>
+            {formData.includeMetalDetectorDevice && (
+                <div>
+                <label htmlFor="metalDetectorDeviceQuantity" className="block text-sm font-medium text-gray-700">Qtd. Dispositivos Detectores de Metal</label>
+                <p className="text-xs text-gray-500 mb-1">Dispositivo eletrônico detector de metal, em formato pórtico, com 06 (seis) zonas de detecção e sistema web integrado.</p>
+                <input type="number" name="metalDetectorDeviceQuantity" id="metalDetectorDeviceQuantity" value={formData.metalDetectorDeviceQuantity} min="0"
+                        onChange={(e) => setFormData(prev => ({...prev, metalDetectorDeviceQuantity: parseInt(e.target.value, 10) || 0}))}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm" />
+                </div>
+            )}
+
+            <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Serviços de Suporte</h3>
+            <div className="flex items-center">
+              <input type="checkbox" name="includeSupportServices" id="includeSupportServices" checked={formData.includeSupportServices} onChange={handleInputChange}
+                     className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500" />
+              <label htmlFor="includeSupportServices" className="ml-2 block text-sm text-gray-900">Incluir Serviços de Suporte</label>
+            </div>
+            {formData.includeSupportServices && (
+               <div>
+                <label htmlFor="supportNumSchools" className="block text-sm font-medium text-gray-700">Qtd. Unidades da Secretaria (para Suporte)</label>
+                <input type="number" name="supportNumSchools" id="supportNumSchools" value={formData.supportNumSchools} min="0"
+                       onChange={(e) => handleNumberInputChange('supportNumSchools', e.target.value)}
+                       className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm" />
+              </div>
+            )}
+          </>
         )}
-
-        <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Serviços de Suporte</h3>
-         <div className="flex items-center">
-            <input type="checkbox" name="includeSupportServices" id="includeSupportServices" checked={formData.includeSupportServices} onChange={handleInputChange}
-                   className="h-4 w-4 text-sky-600 border-gray-300 rounded focus:ring-sky-500" />
-            <label htmlFor="includeSupportServices" className="ml-2 block text-sm text-gray-900">Incluir Serviços de Suporte</label>
-          </div>
-          {formData.includeSupportServices && (
-             <div>
-              <label htmlFor="supportNumSchools" className="block text-sm font-medium text-gray-700">Qtd. Unidades da Secretaria (para Suporte)</label>
-              <input type="number" name="supportNumSchools" id="supportNumSchools" value={formData.supportNumSchools} min="0"
-                     onChange={(e) => handleNumberInputChange('supportNumSchools', e.target.value)}
-                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm" />
-            </div>
-          )}
       </form>
     </div>
   );
@@ -432,7 +465,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
             <table className={`min-w-full border-collapse border ${borderColor} text-xs`}>
               <thead>
                 <tr>
-                  <th colSpan={6} className={`${tableTitleCellStyles} border ${borderColor}`}>Equipamentos, Instalações e Licenças</th>
+                  <th colSpan={6} className={`${tableTitleCellStyles} border ${borderColor}`}>{templateSettings.mainTableTitle || 'Equipamentos, Instalações e Licenças'}</th>
                 </tr>
                 <tr>
                   <th className={`${dataHeaderCellStyles} w-[4%]`}>Item</th>
@@ -522,6 +555,9 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
 
   // Função para renderizar a aba de projeção financeira
   const renderFinanceProjection = () => {
+    if (templateSettings.templateType === 'rfid') {
+      return <div className="p-6 text-gray-500">Projeção financeira não disponível para este template.</div>;
+    }
     // Buscar vigência de custo vigente para a data do formulário
     const dataRef = formData.proposalDate || getCurrentDateISO();
     const vigente = costs
