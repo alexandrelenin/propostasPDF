@@ -16,6 +16,10 @@
 **[FIXED] Template not updating on navigation**
 - `useEffect` in `src/App.tsx:122` now depends on `location.pathname`, ensuring templates reload on route change
 
+**[FIXED] All-proposals re-fetch on every navigation**
+- Separado em dois effects: proposals fetched uma vez no mount (`[]`); templates recarregam em navegação (`[location.pathname]`)
+- `src/App.tsx` — linhas 93-123
+
 ---
 
 ## Security Concerns
@@ -306,14 +310,6 @@
 ---
 
 ## Known Limitations
-
-### All-Proposals Re-fetch on Every Navigation
-
-**Issue:** The `location.pathname` dependency on the main data-fetch `useEffect` triggers a full Firestore reload on every route change
-- **Files:** `src/App.tsx` (line 122)
-- **Context:** This was added to fix the template-not-updating bug, but it has the side effect of fetching all proposals on every navigation
-- **Impact:** Unnecessary Firestore reads and potential UI flicker; will degrade as proposal count grows
-- **Fix approach:** Separate the template-reload effect from the proposals-fetch effect; only re-fetch proposals on explicit user actions (save, delete)
 
 ### No Multi-language Support
 

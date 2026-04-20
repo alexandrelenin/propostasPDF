@@ -91,7 +91,7 @@ const App: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    async function fetchProposalsAndTemplates() {
+    async function fetchProposals() {
       const propostas = await getAllProposals();
       const meta = propostas.map(p => ({
         id: p.id,
@@ -101,24 +101,25 @@ const App: React.FC = () => {
         createdAt: p.createdAt,
       })).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setSavedProposalsMeta(meta);
+    }
+    fetchProposals();
+  }, []);
 
-      // Carregar todos os templates
+  useEffect(() => {
+    async function fetchTemplates() {
       const templates = await getAllTemplates();
       setAllTemplates(templates);
 
-      // Buscar template padrão
       const defaultTemplate = await getDefaultTemplate();
       if (defaultTemplate) {
         setTemplateSettings(defaultTemplate);
       } else if (templates.length > 0) {
-        // Se não há template padrão, usar o primeiro
         setTemplateSettings(templates[0]);
       } else {
-        // Se não há templates, usar o inicial
         setTemplateSettings(initialTemplate);
       }
     }
-    fetchProposalsAndTemplates();
+    fetchTemplates();
   }, [location.pathname]);
 
   // Effect to clear editingProposal if navigating to '/' directly
