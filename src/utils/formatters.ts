@@ -1,5 +1,5 @@
 export const formatCurrency = (value: number | undefined | null): string => {
-  if (value === undefined || value === null) return 'R$\u00A00,00';
+  if (value === undefined || value === null || isNaN(value)) return 'R$\u00A00,00';
   return `R$\u00A0${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
