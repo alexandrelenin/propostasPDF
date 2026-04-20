@@ -1,39 +1,57 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-04-15
+**Analysis Date:** 2026-04-20
+
+---
+
+## [FIXED] Items Resolved Since 2026-04-15
+
+**[FIXED] NaN total in first table**
+- `unitPrice` now uses `?? 0` fallback at `src/components/ProposalView.tsx:134`
+- `formatCurrency` now has `isNaN(value)` guard at `src/utils/formatters.ts:2`
+
+**[FIXED] Duplicate default template bug**
+- `TemplatesView` now calls `setDefaultTemplate()` correctly; no longer creates multiple defaults
+
+**[FIXED] Template not updating on navigation**
+- `useEffect` in `src/App.tsx:122` now depends on `location.pathname`, ensuring templates reload on route change
+
+---
 
 ## Security Concerns
 
 ### Exposed Firebase API Key
 
-**Risk:** Firebase API key is hardcoded in public source code
+**Risk:** Firebase API key hardcoded in public source code
 - **Files:** `src/services/firebase.ts` (line 6)
-- **Current state:** `apiKey: "AIzaSyCuqDzr5tlvrjju9AnoI627YxU6yme-NDc"` is visible in repository
-- **Impact:** Firebase project is potentially accessible to anyone with access to the codebase; allows unauthorized reads/writes if Firestore security rules are weak
-- **Mitigation needed:** Firebase keys for web apps are public-safe by design when paired with strong security rules, but this should be moved to environment variables for consistency and safer deployment practices
-- **Recommendations:** 
-  1. Move Firebase config to `.env.local` and load via environment variables
-  2. Verify Firestore security rules are properly configured to restrict unauthorized access
-  3. Update build pipeline to exclude `.env` files from commits
+- **Current state:** `apiKey: "AIzaSyCuqDzr5tlvrjju9AnoI627YxU6yme-NDc"` committed to repository
+- **Impact:** Firebase project accessible to anyone with repo access; risk escalates if Firestore security rules are weak
+- **Mitigation needed:** Firebase web keys are public-safe by design only when paired with strong security rules, but hardcoding is still bad practice
+- **Recommendations:**
+  1. Move Firebase config to `.env.local` and load via `import.meta.env`
+  2. Verify Firestore security rules restrict unauthorized access
+  3. Add `.env.local` to `.gitignore`
 
 ### Cloudinary Credentials Exposed
 
-**Risk:** Cloudinary cloud name and upload preset are hardcoded
+**Risk:** Cloudinary cloud name and upload preset hardcoded
 - **Files:** `src/components/TemplateEditorView.tsx` (lines 6-7)
-- **Current state:** `CLOUDINARY_CLOUD_NAME` and `CLOUDINARY_UPLOAD_PRESET` are visible
-- **Impact:** While upload presets are meant to be public, the combination with cloud name allows uploading files; abuse potential for storage exhaustion
-- **Recommendations:** 
+- **Current state:** `CLOUDINARY_CLOUD_NAME = "dfezexws1"` and `CLOUDINARY_UPLOAD_PRESET = "propostasPDF"` visible in source
+- **Impact:** Unsigned preset enables unrestricted uploads to the cloud account; abuse potential for storage exhaustion
+- **Recommendations:**
   1. Move to environment variables
-  2. Consider implementing rate limiting on image uploads
-  3. Add file type/size validation beyond client-side
+  2. Add rate limiting or signed uploads on Cloudinary side
+  3. Add server-side file type/size validation
 
 ### Weak Error Handling in Audio Upload
 
 **Risk:** Generic error messages hide actual issues
 - **Files:** `src/components/AudioUpload.tsx` (lines 112-113)
 - **Current state:** `catch (err) { setError('Erro ao enviar áudio'); }` swallows all error details
-- **Impact:** Difficult to debug issues; API failures not properly reported
-- **Recommendations:** Log error details to console for debugging; distinguish network vs. transcription errors
+- **Impact:** API failures are not properly reported; difficult to debug
+- **Recommendations:** Log error details to console; distinguish network vs. transcription service errors
+
+---
 
 ## Tech Debt
 
@@ -42,254 +60,275 @@
 **Issue:** Placeholder file with no implementation
 - **Files:** `src/services/storageManager.ts`
 - **Current state:** File exists but contains only empty lines
-- **Impact:** Misleading – appears to be a service layer but is unused
-- **Fix approach:** Either implement the storage manager interface or remove the file entirely
+- **Impact:** Misleading – appears to be a service layer but is completely unused
+- **Fix approach:** Either implement or delete the file
 
 ### Repetitive Firebase Query Logic
 
-**Issue:** Similar patterns repeated across service files
-- **Files:** 
+**Issue:** Similar `getDocs()` patterns repeated across service files independently
+- **Files:**
   - `src/services/templateService.ts`
   - `src/services/proposalService.ts`
   - `src/services/costService.ts`
-- **Current state:** All three files independently query Firestore with similar `getDocs()` patterns
-- **Impact:** Difficult to maintain; any changes to query patterns must be repeated
+- **Impact:** Any change to query patterns must be replicated in all three files
 - **Fix approach:** Extract a generic Firebase service layer with reusable query/update methods
 
 ### Type Casting Without Validation
 
 **Issue:** Direct `as Template` and `as Proposal` casts without runtime validation
-- **Files:** 
+- **Files:**
   - `src/services/templateService.ts` (lines 16, 22, 47)
   - `src/services/proposalService.ts` (lines 13, 19)
   - `src/services/costService.ts` (lines 13, 19)
-- **Current state:** `doc.data() as Template` assumes data matches type
-- **Impact:** Runtime errors if Firestore schema changes or contains invalid data
-- **Fix approach:** Implement Zod or similar validation library to parse and validate data at runtime
+- **Current state:** `doc.data() as Template` assumes Firestore data matches the TypeScript type
+- **Impact:** Runtime errors if Firestore schema changes or contains malformed data
+- **Fix approach:** Add Zod or similar runtime validation at service boundaries
 
 ### Bare `catch` Handlers with Empty Blocks
 
-**Issue:** Silent error swallowing in audio parsing
-- **Files:** `src/components/ProposalView.tsx` (lines 91)
+**Issue:** Silent error swallowing in JSON parsing
+- **Files:** `src/components/ProposalView.tsx` (line 91)
 - **Current state:** `try { JSON.parse(...) } catch {}` silently fails without logging
 - **Impact:** Bugs in localStorage consumption go unnoticed
-- **Recommendations:** Add explicit error handling or at least log to console
+- **Recommendations:** Add at minimum a `console.error` in the catch block
+
+### RFID Template Bypass of Cost Validation
+
+**Issue:** RFID template type bypasses cost vigency validation entirely
+- **Files:** `src/components/ProposalView.tsx` (lines 218-221)
+- **Current state:** `if (templateSettings.templateType === 'rfid') { onSaveProposal({ ...currentProposal, costVigencia: '' }); return; }`
+- **Impact:** If other template types besides `standard` and `rfid` are added in the future, the bypass logic will need to be updated; easy to forget. Also, RFID proposals have no cost tracking at all.
+- **Risk:** Low for now (only two template types), but fragile as feature set grows
+
+---
 
 ## Error Handling Gaps
 
 ### Missing Error Boundaries
 
-**Issue:** No React error boundaries for component failures
-- **Files:** All React components
-- **Current state:** No ErrorBoundary components wrapping the application
-- **Impact:** If any component throws an error, the entire app crashes
-- **Recommendations:** Wrap `App.tsx` and major route sections with error boundary
+**Issue:** No React error boundaries wrapping the application
+- **Files:** `src/App.tsx`, all route-level components
+- **Current state:** No `ErrorBoundary` components exist anywhere
+- **Impact:** Any unhandled component exception crashes the entire app
+- **Recommendations:** Wrap `App.tsx` and each major route section with an error boundary
 
 ### Unhandled Promise Rejections
 
-**Issue:** Fire-and-forget async operations
-- **Files:** 
-  - `src/App.tsx` (lines 94, 127, 161, 174)
+**Issue:** Fire-and-forget async operations with no error handling
+- **Files:**
+  - `src/App.tsx` (lines 94-122) — `fetchProposalsAndTemplates()` has no `.catch()` or try/catch
   - `src/components/ProposalView.tsx` (line 187)
-- **Current state:** Multiple `useEffect` hooks with async functions that don't handle all error paths
-- **Impact:** If Firebase calls fail, state can become inconsistent; no retry logic
-- **Example:** `fetchProposalsAndTemplates()` in App.tsx has no error handling if `getAllProposals()` fails
-- **Fix approach:** 
-  1. Add `.catch()` handlers to all Firebase async calls
-  2. Implement retry logic for critical operations
-  3. Show error messages to users for failed data loads
+- **Impact:** If Firebase calls fail, state becomes inconsistent; no user feedback, no retry logic
+- **Fix approach:**
+  1. Add try/catch inside all async `useEffect` functions
+  2. Call `showSystemMessage` with an error if data loads fail
+  3. Add retry logic for critical Firestore reads
 
-### Missing Validation in Critical Functions
+### Missing Validation Before PDF Generation
 
-**Issue:** No validation before PDF generation
+**Issue:** No full validation of template settings before generating PDF
 - **Files:** `src/components/ProposalView.tsx` (lines 233-252)
-- **Current state:** Checks if `currentProposal` exists and if `clientName` is set, but doesn't validate template settings
-- **Impact:** PDF generation could fail silently if critical template data is missing
-- **Recommendations:** Validate all required fields before calling `generateProposalPdf()`
+- **Current state:** Checks `currentProposal` and `clientName` but not whether template data (logo URL, contact info) is valid
+- **Impact:** PDF generation can fail silently if critical template data is missing
+- **Recommendations:** Validate all required fields and provide clear error messages before calling `generateProposalPdf()`
+
+---
 
 ## Performance Bottlenecks
 
-### Large Component Size
+### Large Component: ProposalView.tsx
 
-**Issue:** `ProposalView.tsx` is 702 lines – too large for a single component
+**Issue:** `ProposalView.tsx` is 738 lines — too large for a single component
 - **Files:** `src/components/ProposalView.tsx`
-- **Current state:** Handles form rendering, proposal calculation, PDF generation, and nested tab views in one component
-- **Impact:** 
+- **Current state:** Handles form rendering, proposal calculation, PDF generation, cost vigency lookup, and nested tab views in one file
+- **Impact:**
   - Difficult to test individual features
-  - Re-renders affect entire component tree
-  - State management is coupled
-- **Fix approach:** 
+  - Re-renders affect the entire component tree
+  - State management is tightly coupled
+- **Fix approach:**
   1. Extract form into `ProposalForm.tsx`
   2. Extract preview into `ProposalPreview.tsx`
   3. Extract finance tab into `FinanceProjection.tsx`
-  4. Use context or state management to share data between components
+  4. Share data via context or lifted state
 
 ### All Proposals Loaded at Once
 
-**Issue:** `getAllProposals()` fetches entire collection without pagination
+**Issue:** `getAllProposals()` fetches entire Firestore collection without pagination
 - **Files:** `src/App.tsx` (line 95)
-- **Current state:** Loads all proposals into `savedProposalsMeta` on app startup
-- **Impact:** Performance degrades linearly with proposal count; could load thousands of documents
-- **Scaling limit:** Likely problematic beyond 1000+ proposals
-- **Improvement path:** 
-  1. Implement pagination or infinite scroll
-  2. Add `createdAt` index to Firestore for efficient sorting
-  3. Fetch only metadata needed for list display
+- **Current state:** Loads all proposals into memory on every route change (due to `location.pathname` dependency added in the template-reload fix)
+- **Impact:** Performance degrades with proposal count; now triggered on every navigation, not just app startup
+- **Scaling limit:** Likely problematic beyond ~500 proposals
+- **Improvement path:**
+  1. Implement pagination or cursor-based Firestore queries
+  2. Cache results and only re-fetch when a write occurs
+  3. Fetch only metadata needed for the list view
 
 ### Unnecessary Re-renders in ProposalView
 
 **Issue:** Multiple state updates trigger full component re-render
 - **Files:** `src/components/ProposalView.tsx`
-- **Current state:** `calculateProposal()` is called on every `formData` change (line 175) and updates `currentProposal`
-- **Impact:** Preview tab will re-render even if user is editing form
-- **Recommendations:** Memoize `renderProposalPreview()` and use `useMemo()` for calculated values
+- **Current state:** `calculateProposal()` runs on every `formData` change and updates `currentProposal`
+- **Impact:** Preview tab re-renders even while user is actively editing the form
+- **Recommendations:** Use `useMemo()` for calculated values; memoize `renderProposalPreview()`
 
-## Missing Critical Features
-
-### No Offline Support
-
-**Issue:** Entire app depends on Firebase connectivity
-- **Current state:** All templates, proposals, and costs load from Firestore
-- **Impact:** App is unusable if network is unavailable; no fallback to cached data
-- **Recommendations:** 
-  1. Cache templates and proposals in IndexedDB
-  2. Show cached data if Firebase unavailable
-  3. Queue writes and sync when network returns
-
-### No Undo/Redo
-
-**Issue:** User can lose work if they accidentally clear the form
-- **Files:** `src/components/ProposalView.tsx` (line 50-70, resetForm)
-- **Current state:** Clear button immediately wipes form data with no recovery
-- **Impact:** Users cannot recover from accidental data loss
-- **Recommendations:** 
-  1. Add undo/redo stack for form changes
-  2. Confirm before clearing form
-  3. Auto-save draft to localStorage periodically
-
-### No Audit Trail
-
-**Issue:** No record of who made changes or when
-- **Files:** All service files
-- **Current state:** Proposals have `createdAt` but no `updatedAt` timestamp; no user tracking
-- **Impact:** Cannot track changes to sensitive proposal data
-- **Recommendations:** 
-  1. Add `updatedAt` and `updatedBy` fields to Proposal type
-  2. Create separate audit log collection in Firestore
-  3. Log all save/delete operations
+---
 
 ## Fragile Areas
+
+### Cost Vigency Lookup
+
+**Issue:** Assumes cost data exists and is exactly formatted
+- **Files:** `src/components/ProposalView.tsx` (lines 223-234)
+- **Current state:** Requires exactly 6 cost entries matching the `{itemId}-{vigenciaInicio}` ID format; fails with a generic message if not
+- **Why fragile:**
+  - Hardcoded count of 6; breaks if cost categories change
+  - Exact string ID format assumed with no defensive check
+  - Error message does not guide the user toward a fix
+- **Note:** RFID templates bypass this entirely (lines 218-221), which avoids the fragility for that use case but also means RFID proposals have no cost data at all
+- **Safe modification:**
+  1. Validate cost data integrity when loading costs
+  2. Replace hardcoded `6` with a derived constant from cost category definitions
+  3. Provide actionable error messages directing the user to the cost configuration screen
 
 ### Audio Parsing Logic
 
 **Issue:** Fragile regex patterns that fail silently
 - **Files:** `src/components/AudioUpload.tsx` (lines 5-45)
-- **Current state:** Multiple regex patterns try to extract city, numbers, and template; no validation of extracted data
-- **Why fragile:** 
-  - Regex patterns assume specific word ordering
-  - No validation that numbers are sensible (e.g., quantities > 0)
-  - Missing city/numbers defaults to empty without user notification
-- **Safe modification:** 
-  1. Add test cases for various input formats
-  2. Validate extracted values before storing
-  3. Show extraction results to user for confirmation (already implemented)
-- **Test coverage:** No unit tests for `parseProposalData()`
+- **Current state:** Multiple regex patterns extract city, numbers, and template type; no validation of extracted values
+- **Why fragile:**
+  - Patterns assume specific word ordering
+  - Missing city/numbers default to empty without user notification
+  - No unit tests for `parseProposalData()`
+- **Safe modification:**
+  1. Show extraction results to user for confirmation before applying (partially done)
+  2. Validate that extracted numbers are sensible (quantity > 0)
+  3. Add unit tests covering varied input formats
 
 ### PDF Generation Logic
 
-**Issue:** Complex image handling and page break logic
+**Issue:** Complex image handling and page-break logic with multiple silent failure paths
 - **Files:** `src/services/pdfGenerator.ts` (lines 52-149)
-- **Current state:** Multiple fallback paths for logo loading (http URL → base64 conversion, data URL, SVG viewBox parsing, default fallback)
-- **Why fragile:** 
-  - Heavy use of `try/catch` without specific error types
-  - SVG dimension calculation assumes viewBox exists
-  - No validation that converted images are valid before adding to PDF
-- **Safe modification:** 
-  1. Add unit tests for logo conversion
-  2. Add explicit SVG handling
-  3. Test with various image formats and sizes
-- **Test coverage:** No tests for PDF generation; relies on manual testing
+- **Current state:** Multiple fallback paths for logo loading (HTTP URL → base64 conversion → data URL → SVG viewBox parsing → default fallback)
+- **Why fragile:**
+  - Heavy use of `try/catch` without distinguishing error types
+  - SVG dimension calculation assumes `viewBox` attribute exists
+  - Converted images are not validated before being added to the PDF
+- **Safe modification:**
+  1. Add explicit SVG handling with viewBox fallback dimensions
+  2. Test with various image formats (SVG, PNG, JPEG, WebP)
+  3. Add unit tests for logo conversion paths
 
-### Cost Vigency Lookup
-
-**Issue:** Assumes cost data exists and is properly formatted
-- **Files:** `src/components/ProposalView.tsx` (lines 214-226, 525-535)
-- **Current state:** Hard requirement that 6 costs exist for vigency; fails with cryptic message if not
-- **Why fragile:** 
-  - Expects exact ID format: `{itemId}-{vigenciaInicio}`
-  - No validation of cost counts or values
-  - User sees generic error without guidance on fixing
-- **Safe modification:** 
-  1. Validate cost data integrity when loading
-  2. Provide clear error messages for missing costs
-  3. Add admin UI to verify cost setup
-- **Test coverage:** No tests for cost lookup logic
+---
 
 ## Testing Gaps
 
 ### Zero Automated Tests
 
-**Issue:** No test suite exists
-- **Current state:** No `.test.ts` or `.spec.ts` files; no Jest or Vitest configuration (though Vite is set up)
-- **Impact:** 
-  - Refactoring is risky
-  - Bugs not caught until deployed
-  - Cost calculation logic untested
+**Issue:** No test suite exists in the project
+- **Current state:** No `.test.ts` or `.spec.ts` files in `src/`; no Jest or Vitest configuration; no test runner installed as a dependency
+- **Impact:**
+  - Refactoring is risky with no regression safety net
+  - Cost calculation logic is entirely untested — this is a financial proposal system
   - PDF generation untested
   - Audio parsing untested
-- **Priority:** High – this is a financial proposal system where calculation errors have direct business impact
-- **Recommendations:** 
-  1. Add unit tests for cost/calculation logic (highest priority)
-  2. Add integration tests for Firebase operations
-  3. Add component tests for form validation
-  4. Aim for >80% coverage of calculation paths
+  - Recent RFID feature added without test coverage
+- **Priority:** High — calculation errors have direct business impact
+- **Recommendations:**
+  1. Install `vitest` and `@testing-library/react` as devDependencies
+  2. Add unit tests for `calculateProposal()` and cost vigency lookup (highest priority)
+  3. Add unit tests for `parseProposalData()` in AudioUpload
+  4. Add unit tests for `formatCurrency` (now that the `isNaN` fix is in place, regressions are possible)
+  5. Aim for >80% coverage of calculation paths
 
 ### No E2E Tests
 
 **Issue:** No user flow testing
-- **Current state:** No Cypress, Playwright, or similar
-- **Impact:** Cannot verify entire proposal creation → save → PDF generation flow
-- **Recommendations:** Add basic E2E tests for critical workflows
+- **Current state:** No Cypress, Playwright, or similar framework
+- **Impact:** Cannot verify the full proposal creation → save → PDF generation flow automatically
+- **Recommendations:** Add basic E2E tests for the critical proposal workflow
+
+---
+
+## Missing Critical Features
+
+### No Offline Support
+
+**Issue:** App depends entirely on Firebase connectivity
+- **Current state:** All templates, proposals, and costs load from Firestore with no local cache
+- **Impact:** App is unusable if network is unavailable
+- **Recommendations:**
+  1. Cache templates and proposals in IndexedDB
+  2. Show cached data when Firebase is unavailable
+  3. Queue writes and sync when connectivity returns
+
+### No Undo/Redo
+
+**Issue:** Users can lose work by accidentally clearing the form
+- **Files:** `src/components/ProposalView.tsx` (lines 50-70, `resetForm`)
+- **Current state:** Clear button immediately wipes form data with no confirmation or recovery
+- **Recommendations:**
+  1. Add a confirmation dialog before clearing
+  2. Auto-save draft to localStorage periodically
+  3. Optionally add an undo stack for form changes
+
+### No Audit Trail
+
+**Issue:** No record of who changed a proposal or when
+- **Files:** All service files
+- **Current state:** Proposals have `createdAt` but no `updatedAt`; no user identity is tracked
+- **Recommendations:**
+  1. Add `updatedAt` and `updatedBy` fields to the `Proposal` type
+  2. Log all save/delete operations to a Firestore audit collection
+
+---
 
 ## Dependencies at Risk
 
 ### Unversioned Dependencies
 
-**Issue:** Package.json uses `^` and `~` versions allowing updates
+**Issue:** `package.json` uses `^` versions allowing automatic minor/patch updates
 - **Files:** `package.json`
-- **Current state:** 
-  - `jspdf-autotable` at `^3.8.2`
-  - `firebase` at `^11.9.1`
+- **Notable packages:**
+  - `firebase` at `^11.9.1` — Firebase major versions frequently contain breaking changes
+  - `jspdf-autotable` at `^3.8.2` — PDF layout changes could break generated documents
   - `react` at `^19.1.0`
-- **Risk:** Breaking changes in minor versions could break PDF generation or Firebase integration
-- **Recommendations:** 
-  1. Test after Firebase major version updates (they often introduce breaking changes)
-  2. Pin critical dependencies to exact versions for production stability
-  3. Add dependency security scanning (GitHub Dependabot)
+- **Recommendations:**
+  1. Pin critical dependencies to exact versions for production stability
+  2. Add GitHub Dependabot for security scanning
 
-### Missing Testing Framework
+### Missing Testing Framework in Dependencies
 
 **Issue:** No test runner is installed
-- **Current state:** Vite is configured but no test framework in dependencies
-- **Impact:** Cannot write tests without first adding Jest/Vitest
-- **Recommendations:** Add `vitest` and `@testing-library/react` to devDependencies
-
-## Known Limitations
-
-### No Multi-language Support
-
-**Issue:** All text is hardcoded in Portuguese
-- **Files:** Throughout codebase
-- **Impact:** Cannot serve international clients
-- **Recommendation:** Not urgent for current use case, but noted for future expansion
-
-### No Responsive Image Handling
-
-**Issue:** Logo upload assumes all images will be small enough
-- **Files:** `src/components/TemplateEditorView.tsx` (line 92 checks 2MB, but no resolution checks)
-- **Impact:** Very large images could cause memory issues or slow rendering
-- **Recommendations:** Add image resolution validation and compression
+- **Current state:** Vite is configured but `vitest` and `@testing-library/react` are absent from `package.json`
+- **Impact:** Cannot add tests without first installing the framework
+- **Recommendations:** Add `vitest` and `@testing-library/react` to `devDependencies`
 
 ---
 
-*Concerns audit: 2026-04-15*
+## Known Limitations
+
+### All-Proposals Re-fetch on Every Navigation
+
+**Issue:** The `location.pathname` dependency on the main data-fetch `useEffect` triggers a full Firestore reload on every route change
+- **Files:** `src/App.tsx` (line 122)
+- **Context:** This was added to fix the template-not-updating bug, but it has the side effect of fetching all proposals on every navigation
+- **Impact:** Unnecessary Firestore reads and potential UI flicker; will degrade as proposal count grows
+- **Fix approach:** Separate the template-reload effect from the proposals-fetch effect; only re-fetch proposals on explicit user actions (save, delete)
+
+### No Multi-language Support
+
+**Issue:** All UI text hardcoded in Portuguese
+- **Files:** Throughout codebase
+- **Impact:** Cannot serve international clients
+- **Recommendation:** Not urgent for current use case; noted for future
+
+### No Responsive Image Validation
+
+**Issue:** Logo upload checks file size (2MB) but not image resolution
+- **Files:** `src/components/TemplateEditorView.tsx` (line 92)
+- **Impact:** Very high-resolution images could cause memory issues or slow PDF rendering
+- **Recommendations:** Add client-side image resolution check and compression before upload
+
+---
+
+*Concerns audit: 2026-04-20*

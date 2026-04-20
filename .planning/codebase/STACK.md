@@ -1,6 +1,6 @@
 # Technology Stack
 
-**Analysis Date:** 2026-04-15
+**Analysis Date:** 2026-04-20
 
 ## Languages
 
@@ -44,7 +44,7 @@
 ## Key Dependencies
 
 **Critical:**
-- firebase 11.9.1 - Backend database and authentication (Firestore)
+- firebase 11.9.1 - Backend database (Firestore only; no Auth used)
 - uuid 11.1.0 - UUID generation for proposal IDs
 - react-router-dom 7.6.1 - Routing between views
 
@@ -53,10 +53,25 @@
 - @types/react-dom 19.1.6 - Type definitions for React DOM
 - @types/node 22.14.0 - Type definitions for Node.js
 
+## Domain Model (key types in `src/types.ts`)
+
+**ProposalItemCategory enum:**
+- `ELECTRONIC_DEVICE`, `INSTALLATION_SERVICES`, `STUDENT_LICENSE`, `SERVER_LICENSE`,
+  `SUPPORT_SERVICES`, `METAL_DETECTOR_DEVICE`, `RFID_CARD` (added 2026-04-16)
+
+**TemplateSettings interface (`src/types.ts` line 54):**
+- `templateType?: 'standard' | 'rfid'` - Controls PDF layout variant
+- `mainTableTitle?: string` - Overrides default main table heading in PDF output
+- Both fields added 2026-04-16 as part of RFID template support
+
+**Bug fixes applied (2026-04-16):**
+- `src/components/ProposalView.tsx` - `unitPrice` now uses `?? 0` fallback to prevent NaN
+- `src/utils/formatters.ts` - Added `isNaN` guard in number formatter
+
 ## Configuration
 
 **Environment:**
-- `.env.local` file present - Contains `GEMINI_API_KEY` (placeholder)
+- `.env.local` file present - Contains `GEMINI_API_KEY` (placeholder; not actively used)
 - `vite.config.ts` - Vite build configuration with environment variable loading
 - Environment variables injected at build time via Vite `define` option
 
@@ -79,4 +94,4 @@
 
 ---
 
-*Stack analysis: 2026-04-15*
+*Stack analysis: 2026-04-20*
