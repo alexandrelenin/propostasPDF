@@ -6,6 +6,7 @@ export enum ProposalItemCategory {
   SUPPORT_SERVICES = 'SUPPORT_SERVICES', // Serviços de Suporte
   METAL_DETECTOR_DEVICE = 'METAL_DETECTOR_DEVICE', // Dispositivo eletrônico detector de metal
   RFID_CARD = 'RFID_CARD', // Cartão de proximidade RFID
+  KIT_ALUNO_PRESENTE = 'KIT_ALUNO_PRESENTE', // Kit Aluno Presente (400/600/800 alunos)
 }
 
 export interface ProposalItemConfigEntry {
@@ -24,7 +25,7 @@ export interface ProposalItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  unitType: 'UN'; // Fixed as 'UN' from PDF for main items
+  unitType: 'UN' | 'Kit'; // 'UN' para itens padrão; 'Kit' para o template Aluno Presente
 }
 
 export interface Proposal {
@@ -42,6 +43,7 @@ export interface Proposal {
   costVigencia: string; // Vigência do custo vigente associado
   includeMetalDetectorDevice: boolean;
   metalDetectorDeviceQuantity: number;
+  kitSize?: 400 | 600 | 800; // preenchido apenas no template 'aluno-presente'
 }
 
 export interface ContactInfo {
@@ -67,8 +69,9 @@ export interface TemplateSettings {
     [ProposalItemCategory.METAL_DETECTOR_DEVICE]: number;
     [ProposalItemCategory.RFID_CARD]: number;
   };
-  templateType?: 'standard' | 'rfid';
+  templateType?: 'standard' | 'rfid' | 'aluno-presente';
   mainTableTitle?: string;
+  kitUnitPrices?: { 400: number; 600: number; 800: number }; // valores unitários padrão por kit
 }
 
 export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvestment' | 'supportMonthlyTotal' | 'supportAnnualTotal' | 'createdAt' | 'costVigencia'> & {
@@ -81,6 +84,8 @@ export type ProposalInputData = Omit<Proposal, 'id' | 'items' | 'firstYearInvest
     [ProposalItemCategory.RFID_CARD]: number;
   };
   costVigencia?: string;
+  kitSize?: 400 | 600 | 800;
+  kitQuantity?: number;
 };
 
 export interface SavedProposalMeta {

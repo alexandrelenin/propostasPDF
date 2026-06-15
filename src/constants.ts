@@ -27,6 +27,28 @@ export const INITIAL_TEMPLATE_SETTINGS: TemplateSettings = {
   },
   templateType: 'standard' as const,
   mainTableTitle: 'Equipamentos, Instalações e Licenças',
+  kitUnitPrices: { 400: 33670, 600: 48370, 800: 55070 },
+};
+
+export interface KitDefinition {
+  alunos: number;
+  alunosExtenso: string;
+  equip: number;       // nº de equipamentos
+  equipExtenso: string;
+}
+
+export const KIT_DEFINITIONS: Record<400 | 600 | 800, KitDefinition> = {
+  400: { alunos: 400, alunosExtenso: 'quatrocentos', equip: 2, equipExtenso: 'dois' },
+  600: { alunos: 600, alunosExtenso: 'seiscentos', equip: 3, equipExtenso: 'três' },
+  800: { alunos: 800, alunosExtenso: 'oitocentos', equip: 4, equipExtenso: 'quatro' },
+};
+
+// Descrição da coluna "Descrição" da Tabela 2, parametrizada pelo kit.
+// Os "extensos" (alunos/equipamentos) são fixos por kit — sem cálculo de extenso.
+export const buildKitDescription = (size: 400 | 600 | 800): string => {
+  const k = KIT_DEFINITIONS[size];
+  const equipStr = String(k.equip).padStart(2, '0'); // "02", "03", "04"
+  return `Aquisição de kit de solução tecnológica integrada para registro e gestão da frequência de até ${k.alunos} (${k.alunosExtenso}) alunos em 01 (uma) unidade de ensino, composto por ${equipStr} (${k.equipExtenso}) equipamentos de reconhecimento biométrico facial e licença de uso de sistema de gestão em ambiente web, contemplando, adicionalmente, os serviços de hospedagem, atualizações e envio de alertas pelo período de 12 (doze) meses.`;
 };
 
 export const PROPOSAL_ITEM_DEFINITIONS: ProposalItemConfigEntry[] = [

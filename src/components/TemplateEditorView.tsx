@@ -270,7 +270,7 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
               <NumberInputField
                 key={itemDef.category}
                 label={`Preço Unitário: ${itemDef.name.substring(0,50)}...`} 
-                value={settings.defaultUnitPrices[itemDef.category]}
+                value={settings.defaultUnitPrices[itemDef.category as keyof typeof settings.defaultUnitPrices]}
                 onChange={val => handleUnitPriceChange(itemDef.category, val)}
               />
             ))}

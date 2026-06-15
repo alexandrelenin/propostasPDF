@@ -131,7 +131,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       if (itemConfig.category === ProposalItemCategory.METAL_DETECTOR_DEVICE) {
         quantity = formData.includeMetalDetectorDevice ? formData.metalDetectorDeviceQuantity : 0;
       }
-      const unitPrice = templateSettings.defaultUnitPrices[itemConfig.category as ProposalItemCategory] ?? 0;
+      const unitPrice = templateSettings.defaultUnitPrices[itemConfig.category as keyof typeof templateSettings.defaultUnitPrices] ?? 0;
       return {
         id: itemConfig.id,
         itemNumber: itemConfig.itemNumber,
