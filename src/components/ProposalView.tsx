@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Proposal, Template, ProposalItem, ProposalItemCategory, ProposalInputData, ProposalItemConfigEntry, Cost, SavedProposalMeta } from '../types';
-import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, SUPPORT_SERVICE_DESCRIPTION_TEMPLATE } from '../constants';
+import { PROPOSAL_ITEM_DEFINITIONS, SUPPORT_ITEM_CATEGORY, SUPPORT_SERVICE_DESCRIPTION_TEMPLATE, buildKitDescription } from '../constants';
 import { formatCurrency, formatDateForDisplay, getCurrentDateISO } from '../utils/formatters';
 // import { generatePdfFromElement } from '../services/pdfGenerator'; // Old way
 import { generateProposalPdf } from '../services/pdfGenerator'; // New programmatic way
@@ -41,6 +41,8 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
     supportNumSchools: 0,
     includeMetalDetectorDevice: false,
     metalDetectorDeviceQuantity: 0,
+    kitSize: undefined,
+    kitQuantity: 0,
   });
 
   const [currentProposal, setCurrentProposal] = useState<Proposal | null>(null);
@@ -65,6 +67,8 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
       supportNumSchools: 0,
       includeMetalDetectorDevice: false,
       metalDetectorDeviceQuantity: 0,
+      kitSize: undefined,
+      kitQuantity: 0,
     });
     setCurrentProposal(null);
     setIsEditing(false);
@@ -109,6 +113,8 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
         supportNumSchools: existingProposal.supportNumSchools,
         includeMetalDetectorDevice: existingProposal.includeMetalDetectorDevice,
         metalDetectorDeviceQuantity: existingProposal.metalDetectorDeviceQuantity,
+        kitSize: existingProposal.kitSize,
+        kitQuantity: existingProposal.items.find(i => i.category === ProposalItemCategory.KIT_ALUNO_PRESENTE)?.quantity || 0,
       });
       setIsEditing(true);
       setActiveTab('form'); 
@@ -126,6 +132,39 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
   }, []);
 
   const calculateProposal = useCallback(() => {
+    if (templateSettings.templateType === 'aluno-presente') {
+      const size = formData.kitSize;
+      const qty = formData.kitQuantity || 0;
+      const unitPrice = size ? (templateSettings.kitUnitPrices?.[size] ?? 0) : 0;
+      const kitItem: ProposalItem = {
+        id: 'kit-aluno-presente',
+        itemNumber: '1',
+        name: size ? buildKitDescription(size) : '',
+        category: ProposalItemCategory.KIT_ALUNO_PRESENTE,
+        quantity: qty,
+        unitPrice,
+        totalPrice: qty * unitPrice,
+        unitType: 'Kit',
+      };
+      const kitProposal: Proposal = {
+        id: isEditing && existingProposal ? existingProposal.id : uuidv4(),
+        clientName: formData.clientName.toUpperCase(),
+        proposalLocation: formData.proposalLocation,
+        proposalDate: formData.proposalDate,
+        items: [kitItem],
+        includeSupportServices: false,
+        supportNumSchools: 0,
+        firstYearInvestment: kitItem.totalPrice,
+        createdAt: isEditing && existingProposal ? existingProposal.createdAt : new Date().toISOString(),
+        costVigencia: formData.costVigencia || '',
+        includeMetalDetectorDevice: false,
+        metalDetectorDeviceQuantity: 0,
+        ...(size ? { kitSize: size } : {}),
+      };
+      setCurrentProposal(kitProposal);
+      return;
+    }
+
     const items: ProposalItem[] = PROPOSAL_ITEM_DEFINITIONS.map((itemConfig: ProposalItemConfigEntry) => {
       let quantity = formData.itemQuantities[itemConfig.category as keyof typeof formData.itemQuantities] || 0;
       if (itemConfig.category === ProposalItemCategory.METAL_DETECTOR_DEVICE) {
@@ -308,7 +347,41 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
           </div>
         </div>
 
-        {templateSettings.templateType === 'rfid' ? (
+        {templateSettings.templateType === 'aluno-presente' ? (
+          <>
+            <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Kit Aluno Presente</h3>
+            <div>
+              <label htmlFor="kitSize" className="block text-sm font-medium text-gray-700">Kit</label>
+              <select
+                id="kitSize"
+                value={formData.kitSize ?? ''}
+                onChange={e => setFormData(prev => ({ ...prev, kitSize: (e.target.value ? Number(e.target.value) : undefined) as 400 | 600 | 800 | undefined }))}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+              >
+                <option value="">Selecione o kit...</option>
+                <option value="400">Kit 400 alunos (2 equipamentos)</option>
+                <option value="600">Kit 600 alunos (3 equipamentos)</option>
+                <option value="800">Kit 800 alunos (4 equipamentos)</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="kitQuantity" className="block text-sm font-medium text-gray-700">Qtde. de Kits</label>
+              <input
+                type="number"
+                id="kitQuantity"
+                min="0"
+                value={formData.kitQuantity || 0}
+                onChange={e => setFormData(prev => ({ ...prev, kitQuantity: parseInt(e.target.value, 10) || 0 }))}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
+              />
+            </div>
+            {formData.kitSize && (
+              <p className="text-xs text-gray-600 mt-1">
+                Valor unitário: {formatCurrency(templateSettings.kitUnitPrices?.[formData.kitSize] ?? 0)}
+              </p>
+            )}
+          </>
+        ) : templateSettings.templateType === 'rfid' ? (
           <>
             <h3 className="text-lg font-semibold text-gray-800 pt-4 border-t mt-6">Cartão de Proximidade RFID</h3>
             {PROPOSAL_ITEM_DEFINITIONS.filter(item => item.category === ProposalItemCategory.RFID_CARD).map((itemConfig: ProposalItemConfigEntry) => (
@@ -465,7 +538,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
             <table className={`min-w-full border-collapse border ${borderColor} text-xs`}>
               <thead>
                 <tr>
-                  <th colSpan={6} className={`${tableTitleCellStyles} border ${borderColor}`}>{templateSettings.mainTableTitle || 'Equipamentos, Instalações e Licenças'}</th>
+                  <th colSpan={6} className={`${tableTitleCellStyles} border ${borderColor}`}>{templateSettings.mainTableTitle || (templateSettings.templateType === 'aluno-presente' ? 'Especificações e valores' : 'Equipamentos, Instalações e Licenças')}</th>
                 </tr>
                 <tr>
                   <th className={`${dataHeaderCellStyles} w-[4%]`}>Item</th>
@@ -555,7 +628,7 @@ const ProposalView: React.FC<ProposalViewProps> = ({ templateSettings, allTempla
 
   // Função para renderizar a aba de projeção financeira
   const renderFinanceProjection = () => {
-    if (templateSettings.templateType === 'rfid') {
+    if (templateSettings.templateType === 'rfid' || templateSettings.templateType === 'aluno-presente') {
       return <div className="p-6 text-gray-500">Projeção financeira não disponível para este template.</div>;
     }
     // Buscar vigência de custo vigente para a data do formulário

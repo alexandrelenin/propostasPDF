@@ -174,7 +174,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
   currentY += (introLines.length * doc.getLineHeight() / doc.internal.scaleFactor) + 6; // Space after intro
 
   // 4. Main Items Table (with integrated title)
-  const mainItemsTableTitle = settings.mainTableTitle || 'Equipamentos, Instalações e Licenças';
+  const mainItemsTableTitle = settings.mainTableTitle || (settings.templateType === 'aluno-presente' ? 'Especificações e valores' : 'Equipamentos, Instalações e Licenças');
   const mainItemsHead = [
     [{ content: mainItemsTableTitle, colSpan: 6, 
       // @ts-ignore
@@ -189,6 +189,7 @@ export const generateProposalPdf = async (proposal: Proposal, settings: Template
       ProposalItemCategory.STUDENT_LICENSE,
       ProposalItemCategory.SERVER_LICENSE,
       ProposalItemCategory.RFID_CARD,
+      ProposalItemCategory.KIT_ALUNO_PRESENTE,
     ];
     return order.indexOf(a.category) - order.indexOf(b.category);
   });

@@ -86,6 +86,16 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
     }));
   };
 
+  const handleKitPriceChange = (size: 400 | 600 | 800, value: number) => {
+    setSettings(prev => ({
+      ...prev,
+      kitUnitPrices: {
+        ...(prev.kitUnitPrices ?? { 400: 0, 600: 0, 800: 0 }),
+        [size]: value,
+      },
+    }));
+  };
+
   const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -191,6 +201,7 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
           >
             <option value="standard">Padrão</option>
             <option value="rfid">RFID</option>
+            <option value="aluno-presente">Aluno Presente</option>
           </select>
         </div>
 
@@ -204,6 +215,15 @@ const TemplateEditorView: React.FC<TemplateEditorViewProps> = ({ initialSettings
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
               placeholder="Ex: Cartão de Proximidade RFID"
             />
+          </div>
+        )}
+
+        {(settings.templateType === 'aluno-presente') && (
+          <div className="mb-4 border border-gray-200 rounded-md p-3 bg-slate-50">
+            <p className="text-sm font-medium text-gray-700 mb-2">Valores unitários padrão dos Kits (R$)</p>
+            <NumberInputField label="Kit 400 alunos" step="1" value={settings.kitUnitPrices?.[400] ?? 0} onChange={v => handleKitPriceChange(400, v)} />
+            <NumberInputField label="Kit 600 alunos" step="1" value={settings.kitUnitPrices?.[600] ?? 0} onChange={v => handleKitPriceChange(600, v)} />
+            <NumberInputField label="Kit 800 alunos" step="1" value={settings.kitUnitPrices?.[800] ?? 0} onChange={v => handleKitPriceChange(800, v)} />
           </div>
         )}
 
