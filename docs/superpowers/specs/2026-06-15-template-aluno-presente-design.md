@@ -44,17 +44,15 @@ Texto único parametrizado pelo kit selecionado:
 > ensino, composto por **{equip}** (**{equipExtenso}**) equipamentos de reconhecimento
 > biométrico facial e licença de uso de sistema de gestão em ambiente web,
 > contemplando, adicionalmente, os serviços de hospedagem, atualizações e envio de
-> alertas pelo período de 12 (doze) meses, pelo valor unitário de R$ {valor}
-> (**{valorExtenso}**)."
+> alertas pelo período de 12 (doze) meses."
 
 - `{alunos}`/`{alunosExtenso}`: 400/"quatrocentos", 600/"seiscentos", 800/"oitocentos".
 - `{equip}`/`{equipExtenso}`: 2/"dois", 3/"três", 4/"quatro".
-- `{valor}`/`{valorExtenso}`: **valor unitário** do kit; extenso em **reais, sem
-  centavos** (ex.: "trinta e três mil, seiscentos e setenta reais").
 
-> **A confirmar (1 linha):** o extenso na Descrição é do **valor unitário** (assumido)
-> ou do **valor total** (Qtd × unitário)? E a frase final "pelo valor unitário de R$ …"
-> está com a redação desejada?
+> **Não há valor monetário por extenso.** Os únicos "extensos" da Descrição são os
+> números embutidos no texto (alunos e equipamentos), que variam só entre os 3 kits.
+> Como são valores fixos, podem ser 3 strings prontas (ou o template acima). Sem
+> helper de extenso monetário e sem alterar o `numeroPorExtenso`.
 
 ## Modelo de dados (`src/types.ts`)
 
@@ -72,12 +70,12 @@ salvos no Firestore. Sem migração de dados.
 
 - `INITIAL_TEMPLATE_SETTINGS`: adicionar
   `kitUnitPrices: { 400: 33670, 600: 48370, 800: 55070 }`.
-- Definir as faixas de kit (alunos → nº de equipamentos): `{400: 2, 600: 3, 800: 4}`.
-- Adicionar texto-modelo da Descrição + função que o preenche.
-- **Helper `valorPorExtenso(n)`** (reais, sem centavos). Reaproveita
-  `numeroPorExtenso`, **estendendo-o** para suportar dezenas/centenas de milhar
-  (hoje só vai até 9.999 e cai em `toString()` para ≥ 10.000; precisamos de até ~999.999
-  para cobrir 33.670/48.370/55.070).
+- Definir as faixas de kit (alunos → nº de equipamentos + extensos):
+  `{400: {equip: 2, alunosExtenso: 'quatrocentos', equipExtenso: 'dois'}, ...}`.
+- Adicionar texto-modelo da Descrição + função que o preenche (substituição simples
+  de placeholders; sem cálculo de extenso).
+- **Sem** helper de extenso monetário e **sem** alterar `numeroPorExtenso` — os
+  extensos da Descrição (alunos/equipamentos) são strings fixas por kit.
 
 ## UI — `src/components/TemplateEditorView.tsx`
 
