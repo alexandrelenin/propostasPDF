@@ -3,6 +3,7 @@ import { Template } from '../types';
 import { getAllTemplates, deleteTemplate, setDefaultTemplate, saveTemplate, getDefaultTemplate, duplicateTemplate } from '../services/templateService';
 import { v4 as uuidv4 } from 'uuid';
 import TemplateEditorView from './TemplateEditorView';
+import { INITIAL_TEMPLATE_SETTINGS } from '../constants';
 
 const emptyTemplate = (): Template => ({
   id: uuidv4(),
@@ -21,6 +22,7 @@ const emptyTemplate = (): Template => ({
     METAL_DETECTOR_DEVICE: 0,
   },
   cidadeUf: '',
+  kitUnitPrices: INITIAL_TEMPLATE_SETTINGS.kitUnitPrices,
 });
 
 const TemplatesView: React.FC = () => {
@@ -73,7 +75,8 @@ const TemplatesView: React.FC = () => {
         ...defaultTemplate,
         id: uuidv4(),
         name: '',
-        isDefault: false
+        isDefault: false,
+        kitUnitPrices: defaultTemplate.kitUnitPrices ?? INITIAL_TEMPLATE_SETTINGS.kitUnitPrices,
       };
     } else {
       base = emptyTemplate();
